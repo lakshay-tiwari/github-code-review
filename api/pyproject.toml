@@ -14,6 +14,10 @@ dependencies = [
     "pydantic>=2.9.0",
     "pydantic-settings>=2.6.0",
     "httpx>=0.27.0",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "greenlet>=3.1.0",
 ]
 
 [project.optional-dependencies]
@@ -34,6 +38,7 @@ pythonpath = ["."]
 [tool.ruff]
 target-version = "py312"
 line-length = 88
+extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
