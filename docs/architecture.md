@@ -114,9 +114,9 @@ graph TD
 
 ## 6. Phase Roadmap Status
 
-- **Phase 1 (Current)**: Project foundation, Next.js minimal shell, FastAPI health endpoint, Docker Compose infrastructure (Postgres, Redis, Qdrant, Neo4j).
-- **Phase 2 (Upcoming)**: Frontend foundation and Clerk authentication shell.
-- **Phase 3 (Subphases 3A–3F)**: Backend models, Clerk verification, LLM/embedding providers, Qdrant adapter, Neo4j adapter, Celery queue.
+- **Phase 1**: Project foundation, Next.js minimal shell, FastAPI health endpoint, Docker Compose infrastructure (Postgres, Redis, Qdrant, Neo4j). *(Completed)*
+- **Phase 2 (Current)**: Frontend foundation, accessible design system, polished developer landing page, Clerk authentication shell, protected `/dashboard` routing, and `/dashboard/chat` workspace placeholder. *(Completed)*
+- **Phase 3 (Upcoming — Subphases 3A–3F)**: Backend models, Clerk verification, LLM/embedding providers, Qdrant adapter, Neo4j adapter, Celery queue.
 - **Phase 4**: Public repository submission & background ingestion pipeline.
 - **Phase 5**: Tree-sitter syntax-aware code chunking & vector indexing.
 - **Phase 6**: LangGraph RAG workflow, streaming, citations, history, checkpointing.

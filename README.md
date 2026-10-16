@@ -114,16 +114,19 @@ ruff check .
 ruff format --check .
 ```
 
-### Frontend Build & Linting
+### Frontend Tests, Build & Linting
 
 ```bash
 cd web
 
-# Run production build
-pnpm build
+# Run component & unit tests (Vitest)
+pnpm test
 
 # Run linting
 pnpm lint
+
+# Run production build
+pnpm build
 ```
 
 ### Infrastructure Health Check
@@ -137,7 +140,7 @@ docker compose --project-directory . -f infra/docker-compose.yml ps
 ## Phase Sequence Roadmap
 
 1. **Phase 1** — Project foundation and local infrastructure. *(Completed)*
-2. **Phase 2** — Frontend foundation and Clerk shell.
+2. **Phase 2** — Frontend foundation and Clerk authentication shell. *(Completed)*
 3. **Phase 3** — Backend foundations (Subphases 3A–3F: DB, Clerk Auth, Providers, Qdrant, Neo4j, Celery).
 4. **Phase 4** — Repository submission and ingestion jobs.
 5. **Phase 5** — Syntax-aware chunking, embeddings, and Qdrant indexing.
