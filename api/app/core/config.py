@@ -62,6 +62,18 @@ class Settings(BaseSettings):
     CLERK_AUDIENCE: str = ""
     CLERK_PEM_PUBLIC_KEY: str = ""
 
+    # LLM Configuration (Phase 3C)
+    LLM_PROVIDER: str = "groq"
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    LLM_TEMPERATURE: float = 0.2
+
+    # Embedding Configuration (Phase 3C)
+    EMBEDDING_PROVIDER: str = "sentence-transformers"
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    EMBEDDING_DIMENSION: int = 384
+
+
     @property
     def clerk_effective_issuer(self) -> str:
         """Derive the effective Clerk issuer URL."""

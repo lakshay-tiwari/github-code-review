@@ -71,30 +71,25 @@ This document establishes the architecture, dependencies, file paths, environmen
 
 ---
 
-### Subphase 3C — LLM and Embedding Provider Interfaces
+### Subphase 3C — LLM and Embedding Provider Interfaces [COMPLETED]
 
 1. **Prerequisites & Dependencies**:
-   - Packages: `langchain-core>=0.3.0`, `langchain-groq>=0.2.0`, `sentence-transformers>=3.3.0` (or local embedding runtime).
-2. **Expected Files Under `api/`**:
-   - `api/app/infrastructure/llm/interfaces.py` (`BaseChatModel` abstract protocol: `agenerate`, `astream`)
-   - `api/app/infrastructure/llm/groq_provider.py` (`GroqChatProvider` wrapping `ChatGroq`)
-   - `api/app/infrastructure/llm/factory.py` (Central factory resolving provider by `settings.LLM_PROVIDER`)
-   - `api/app/infrastructure/embeddings/interfaces.py` (`BaseEmbeddingProvider` abstract protocol: `embed_query`, `embed_documents`, `dimension`)
-   - `api/app/infrastructure/embeddings/sentence_transformer.py` (`SentenceTransformerEmbeddingProvider`)
-   - `api/app/infrastructure/embeddings/factory.py` (Central factory resolving embedding provider)
-   - `api/tests/test_providers.py`
-3. **Existing Code to Reuse**:
-   - [`api/app/core/config.py`](../api/app/core/config.py): Extended with `LLM_PROVIDER`, `GROQ_API_KEY`, `GROQ_MODEL`, `EMBEDDING_MODEL`.
-4. **Required Environment Variables & Packages**:
-   - `LLM_PROVIDER=groq`, `GROQ_API_KEY=gsk_placeholder`, `GROQ_MODEL=llama-3.3-70b-versatile`
-   - `EMBEDDING_PROVIDER=sentence-transformers`, `EMBEDDING_MODEL=all-MiniLM-L6-v2`
-5. **Tests & Verification Criteria**:
-   - Mocked unit tests for provider instantiation, interface compliance, error handling on missing keys.
-   - Verification of vector dimension output (384 dimensions for MiniLM-L6-v2) exposed in provider metadata.
-   - Zero paid or network API calls during standard test suites.
-6. **Risks & Compatibility Questions**:
-   - *Risk*: `sentence-transformers` loading heavy PyTorch dependencies during FastAPI startup.
-   - *Mitigation*: Lazy initialization upon first usage; provider interface guarantees singleton instance reuse.
+   - Packages: `langchain-core>=0.3.0`, `langchain-groq>=0.2.0`, `sentence-transformers>=3.3.0` (with CPU-optimized PyTorch).
+2. **Files Created**:
+   - [`api/app/infrastructure/llm/interfaces.py`](../api/app/infrastructure/llm/interfaces.py) (`BaseChatModel`, `ChatMessage`, `ChatResponse`)
+   - [`api/app/infrastructure/llm/groq_provider.py`](../api/app/infrastructure/llm/groq_provider.py) (`GroqChatProvider` wrapping `ChatGroq`)
+   - [`api/app/infrastructure/llm/factory.py`](../api/app/infrastructure/llm/factory.py) (`get_chat_model` resolving `groq`, singleton caching)
+   - [`api/app/infrastructure/embeddings/interfaces.py`](../api/app/infrastructure/embeddings/interfaces.py) (`BaseEmbeddingProvider` protocol with `dimension=384`)
+   - [`api/app/infrastructure/embeddings/sentence_transformer.py`](../api/app/infrastructure/embeddings/sentence_transformer.py) (`SentenceTransformerEmbeddingProvider` with lazy loading and thread pool executor)
+   - [`api/app/infrastructure/embeddings/factory.py`](../api/app/infrastructure/embeddings/factory.py) (`get_embedding_provider`, singleton caching)
+   - [`api/tests/test_providers.py`](../api/tests/test_providers.py) (15 tests: mocked generation, streaming, vector shape, dimensions, failure handling, live local model inference)
+3. **Existing Code Reused**:
+   - [`api/app/core/config.py`](../api/app/core/config.py): `LLM_PROVIDER`, `GROQ_API_KEY`, `GROQ_MODEL`, `LLM_TEMPERATURE`, `EMBEDDING_PROVIDER`, `EMBEDDING_MODEL`, `EMBEDDING_DIMENSION`.
+4. **Verification Results**:
+   - `pytest` in `api/`: 37 passed, 1 skipped (opt-in Groq live smoke test) in 30.78s.
+   - `ruff` in `api/`: All checks passed.
+   - Confirmed 384-dimensional unit-normalized embeddings generated locally by `all-MiniLM-L6-v2`.
+
 
 ---
 
