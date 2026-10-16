@@ -93,27 +93,26 @@ This document establishes the architecture, dependencies, file paths, environmen
 
 ---
 
-### Subphase 3D — Vector-Store Interface and Qdrant Adapter
+### Subphase 3D — Vector-Store Interface and Qdrant Adapter [COMPLETED]
 
 1. **Prerequisites & Dependencies**:
    - Qdrant container running and healthy on host port `6333`/`6334`.
    - Subphase 3C embedding dimensions (384 for MiniLM-L6-v2).
-   - Packages: `qdrant-client>=1.12.0`.
-2. **Expected Files Under `api/`**:
-   - `api/app/infrastructure/vector/interfaces.py` (`BaseVectorStore` protocol: `ensure_collection`, `upsert_chunks`, `search`, `delete_by_repository`)
-   - `api/app/infrastructure/vector/qdrant_adapter.py` (`QdrantVectorStoreAdapter` with payload schema & index management)
-   - `api/tests/test_qdrant.py`
-3. **Existing Code to Reuse**:
-   - [`api/app/core/config.py`](../api/app/core/config.py): `settings.QDRANT_URL`, `settings.QDRANT_HOST`, `settings.QDRANT_HTTP_PORT`.
-   - [`infra/docker-compose.yml`](../infra/docker-compose.yml): Running `qdrant` container.
-4. **Required Environment Variables & Packages**:
-   - `QDRANT_URL=http://localhost:6333`, `QDRANT_COLLECTION_NAME=cortex_code_chunks`
-5. **Tests & Verification Criteria**:
-   - Mocked adapter tests for filter structure, search queries, and payload serialization.
-   - Optional live integration test against local Qdrant container: collection creation, upsert chunk, query with `repository_id` and `commit_sha` filters, and scoped deletion.
-6. **Risks & Compatibility Questions**:
-   - *Risk*: Dimension mismatch between collection and embedding provider.
-   - *Mitigation*: Adapter validates existing collection vector size at startup and raises an explicit `VectorDimensionMismatchError`.
+   - Packages: `qdrant-client~=1.12.0` (matching Qdrant server `v1.12.1`).
+2. **Files Created**:
+   - [`api/app/infrastructure/vector/interfaces.py`](../api/app/infrastructure/vector/interfaces.py) (`BaseVectorStore`, `ChunkPayload`, `VectorSearchResult`, `VectorDimensionMismatchError`)
+   - [`api/app/infrastructure/vector/qdrant_adapter.py`](../api/app/infrastructure/vector/qdrant_adapter.py) (`QdrantVectorStoreAdapter` with Cosine distance, HNSW indexing, keyword payload indexes, and deterministic UUIDv5 point IDs)
+   - [`api/app/infrastructure/vector/factory.py`](../api/app/infrastructure/vector/factory.py) (`get_vector_store`, singleton caching)
+   - [`api/app/infrastructure/vector/__init__.py`](../api/app/infrastructure/vector/__init__.py)
+   - [`api/tests/test_qdrant.py`](../api/tests/test_qdrant.py) (8 tests: 4 mocked unit tests + 4 real Docker integration tests covering health, dimension mismatch, upsert, filtered search, and scoped deletion)
+3. **Existing Code Reused**:
+   - [`api/app/core/config.py`](../api/app/core/config.py): `settings.QDRANT_URL`, `settings.QDRANT_COLLECTION_NAME`, `settings.QDRANT_PREFER_GRPC`.
+   - [`infra/docker-compose.yml`](../infra/docker-compose.yml): running `cortex-qdrant` container.
+4. **Verification Results**:
+   - `pytest` in `api/`: 45 passed, 1 skipped (opt-in Groq test).
+   - `ruff` in `api/`: All checks passed.
+   - Live Qdrant integration verified against Docker container on port 6333.
+
 
 ---
 

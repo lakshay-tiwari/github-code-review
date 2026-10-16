@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     QDRANT_HTTP_PORT: int = 6333
     QDRANT_GRPC_PORT: int = 6334
     QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_COLLECTION_NAME: str = "cortex_code_chunks"
+    QDRANT_API_KEY: str | None = None
+    QDRANT_PREFER_GRPC: bool = False
+
 
     NEO4J_HOST: str = "localhost"
     NEO4J_HTTP_PORT: int = 7474
