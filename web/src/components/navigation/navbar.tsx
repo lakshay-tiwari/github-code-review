@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { Show, UserButton } from "@clerk/nextjs";
 import { Code2, LayoutDashboard } from "lucide-react";
 import { GitHubIcon } from "@/components/icons/github";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export function Navbar() {
             <span className="hidden sm:inline">GitHub</span>
           </a>
 
-          <SignedOut>
+          <Show when="signed-out">
             <Link href="/sign-in">
               <Button variant="ghost" size="sm">
                 Sign In
@@ -50,9 +50,9 @@ export function Navbar() {
                 Get Started
               </Button>
             </Link>
-          </SignedOut>
+          </Show>
 
-          <SignedIn>
+          <Show when="signed-in">
             <Link href="/dashboard">
               <Button variant="outline" size="sm" className="gap-2">
                 <LayoutDashboard className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function Navbar() {
                 },
               }}
             />
-          </SignedIn>
+          </Show>
         </div>
       </div>
     </header>
