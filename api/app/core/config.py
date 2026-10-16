@@ -52,5 +52,47 @@ class Settings(BaseSettings):
     NEO4J_PASSWORD: str = "cortex_dev_password"
     NEO4J_URI: str = "bolt://localhost:7687"
 
+    # Authentication (Clerk)
+    CLERK_SECRET_KEY: str = ""
+    CLERK_PUBLISHABLE_KEY: str = ""
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: str = ""
+    CLERK_ISSUER: str = ""
+    CLERK_JWKS_URL: str = ""
+    CLERK_AUTHORIZED_PARTY: str = ""
+    CLERK_AUDIENCE: str = ""
+    CLERK_PEM_PUBLIC_KEY: str = ""
+
+    @property
+    def clerk_effective_issuer(self) -> str:
+        """Derive the effective Clerk issuer URL."""
+        if self.CLERK_ISSUER:
+            return self.CLERK_ISSUER.rstrip("/")
+
+        pub_key = self.CLERK_PUBLISHABLE_KEY or self.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        if pub_key and ("pk_test_" in pub_key or "pk_live_" in pub_key):
+            try:
+                import base64
+
+                b64_part = pub_key.split("_", 2)[-1]
+                padded = b64_part + "=" * (-len(b64_part) % 4)
+                domain = base64.b64decode(padded).decode("utf-8").rstrip("$")
+                return f"https://{domain}"
+            except Exception:
+                pass
+
+        # Fallback to default dev instance if configured in web/.env.local
+        return "https://stunning-bobcat-41.clerk.accounts.dev"
+
+    @property
+    def clerk_effective_jwks_url(self) -> str:
+        """Derive the effective Clerk JWKS URL."""
+        if self.CLERK_JWKS_URL:
+            return self.CLERK_JWKS_URL
+        issuer = self.clerk_effective_issuer
+        if issuer:
+            return f"{issuer.rstrip('/')}/.well-known/jwks.json"
+        return ""
+
 
 settings = Settings()
+

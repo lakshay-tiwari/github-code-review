@@ -47,29 +47,27 @@ This document establishes the architecture, dependencies, file paths, environmen
 
 ---
 
-### Subphase 3B — Clerk Token Verification and Authorization
+### Subphase 3B — Clerk Token Verification and Authorization [COMPLETED]
 
 1. **Prerequisites & Dependencies**:
-   - Subphase 3A models (for verifying user ownership of repositories and conversations).
-   - Packages: `pyjwt[crypto]>=2.9.0` or `cryptography>=43.0.0`, `httpx>=0.27.0`.
-2. **Expected Files Under `api/`**:
-   - `api/app/core/security.py` (JWKS caching, asymmetric RSA/ECDSA signature verification, claims validation: `sub`, `iss`, `azp`)
-   - `api/app/api/deps.py` (`get_current_user`, `require_repository_ownership`, `require_conversation_ownership`)
-   - `api/app/api/v1/endpoints/auth_test.py` (Protected test seam `/api/v1/auth/me`)
-   - `api/tests/test_auth.py`
-3. **Existing Code to Reuse**:
-   - [`api/app/core/config.py`](../api/app/core/config.py): Extended with `CLERK_JWKS_URL`, `CLERK_ISSUER`, `CLERK_AUTHORIZED_PARTY`.
-   - [`web/src/middleware.ts`](../web/src/middleware.ts): Client token generation and forward via authorization headers.
-4. **Required Environment Variables & Packages**:
-   - `CLERK_ISSUER` (e.g. `https://stunning-bobcat-41.clerk.accounts.dev` or generic dev URL)
-   - `CLERK_JWKS_URL` (optional override; default derived from issuer)
-   - `CLERK_AUTHORIZED_PARTY` (optional validation)
-5. **Tests & Verification Criteria**:
-   - Unit tests with generated RSA key pairs testing valid tokens, expired tokens, tampered signatures, and missing headers (401/403).
-   - Test ownership enforcement: User A cannot access User B's repositories or conversations.
-6. **Risks & Compatibility Questions**:
-   - *Risk*: Network calls to fetch Clerk JWKS on every request.
-   - *Mitigation*: Cache JWKS public keys in-memory with a TTL and refresh on unknown `kid`.
+   - Subphase 3A models (for verifying user ownership of repositories, jobs, and conversations).
+   - Packages: `pyjwt[crypto]>=2.9.0` (with `cryptography>=43.0.0`), `httpx>=0.27.0`.
+2. **Files Created**:
+   - [`api/app/core/security.py`](../api/app/core/security.py) (Asymmetric RS256 signature verification, in-memory JWKS caching, claims validation: `sub`, `iss`, `azp`, `nbf`, `exp`, `UserContext`)
+   - [`api/app/api/deps.py`](../api/app/api/deps.py) (`get_current_user`, `require_repository_ownership`, `require_job_ownership`, `require_conversation_ownership`, `require_message_ownership`)
+   - [`api/app/api/v1/endpoints/auth.py`](../api/app/api/v1/endpoints/auth.py) (Protected test seams `/api/v1/auth/me`, `/api/v1/auth/test/*`)
+   - [`web/src/app/api/auth/me/route.ts`](../web/src/app/api/auth/me/route.ts) (Next.js server-side proxy route forwarding Clerk session token)
+   - [`web/src/lib/api-client.ts`](../web/src/lib/api-client.ts) (`fetchCurrentUser`)
+   - [`web/src/__tests__/auth-proxy.test.ts`](../web/src/__tests__/auth-proxy.test.ts) (Vitest tests for Next.js auth proxy route)
+   - [`api/tests/test_auth.py`](../api/tests/test_auth.py) (13 tests verifying token decoding, tampering, expiry, claims, resource ownership, and live Clerk JWKS connectivity)
+3. **Existing Code Reused**:
+   - [`api/app/core/config.py`](../api/app/core/config.py): Extended with `CLERK_ISSUER`, `CLERK_JWKS_URL`, `CLERK_AUTHORIZED_PARTY`, `clerk_effective_issuer`, `clerk_effective_jwks_url`.
+   - [`api/app/domain/models`](../api/app/domain/models): Enforced ownership rules for `Repository`, `IngestionJob`, `Conversation`, `Message`.
+4. **Verification Results**:
+   - `pytest` in `api/`: 23/23 tests passed.
+   - `vitest` in `web/`: 13/13 tests passed.
+   - `ruff` in `api/` & `eslint` in `web/`: All checks passed.
+
 
 ---
 

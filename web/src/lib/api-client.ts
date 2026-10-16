@@ -35,3 +35,28 @@ export async function fetchSystemHealth(): Promise<SystemHealth> {
 
   return response.json();
 }
+
+export interface CurrentUser {
+  user_id: string;
+  session_id?: string | null;
+  email?: string | null;
+  authorized_party?: string | null;
+  claims: Record<string, unknown>;
+}
+
+export async function fetchCurrentUser(): Promise<CurrentUser> {
+  const response = await fetch("/api/auth/me", {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch current user: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+

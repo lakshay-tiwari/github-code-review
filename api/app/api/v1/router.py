@@ -2,9 +2,13 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app import __version__
+from app.api.v1.endpoints.auth import router as auth_router
 from app.core.config import settings
 
 api_v1_router = APIRouter()
+
+# Register sub-routers
+api_v1_router.include_router(auth_router)
 
 
 class HealthResponse(BaseModel):
@@ -29,3 +33,4 @@ async def health_check() -> HealthResponse:
         version=__version__,
         environment=settings.APP_ENV,
     )
+
