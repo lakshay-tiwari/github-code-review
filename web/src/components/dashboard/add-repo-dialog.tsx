@@ -1,44 +1,92 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, X, AlertCircle, CheckCircle } from "lucide-react";
+import { Plus, X, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { GitHubIcon } from "@/components/icons/github";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function AddRepoDialog() {
+interface AddRepoDialogProps {
+  onSuccess?: () => void;
+}
+
+interface SubmittedRepo {
+  id: string;
+  owner: string;
+  name: string;
+  default_branch: string;
+  latest_commit_sha?: string | null;
+  status: string;
+  latest_job?: {
+    id: string;
+    status: string;
+  } | null;
+}
+
+export function AddRepoDialog({ onSuccess }: AddRepoDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [repoUrl, setRepoUrl] = useState("");
   const [error, setError] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedRepo, setSubmittedRepo] = useState<SubmittedRepo | null>(null);
 
   const validateGitHubUrl = (url: string) => {
-    const githubRegex = /^https?:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(\/)?$/;
+    const githubRegex =
+      /^https?:\/\/(?:www\.)?github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\.git)?\/?$/;
     return githubRegex.test(url.trim());
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!repoUrl.trim()) {
+    const trimmed = repoUrl.trim();
+    if (!trimmed) {
       setError("Please provide a GitHub repository URL");
       return;
     }
 
-    if (!validateGitHubUrl(repoUrl)) {
-      setError("Must be a valid public GitHub URL (e.g. https://github.com/fastapi/fastapi)");
+    if (!validateGitHubUrl(trimmed)) {
+      setError(
+        "Must be a valid public GitHub URL (e.g. https://github.com/fastapi/fastapi)"
+      );
       return;
     }
 
-    setIsSubmitted(true);
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/repositories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ github_url: trimmed }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.detail || data.error || "Failed to submit repository");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setSubmittedRepo(data);
+      onSuccess?.();
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Network error connecting to Cortex API"
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
     setIsOpen(false);
     setRepoUrl("");
     setError("");
-    setIsSubmitted(false);
+    setSubmittedRepo(null);
   };
 
   return (
@@ -73,24 +121,49 @@ export function AddRepoDialog() {
             </div>
 
             <p className="text-xs text-zinc-400 mb-6">
-              Enter the URL of any public GitHub codebase. Cortex will clone, parse with Tree-sitter, and generate vector embeddings.
+              Enter the URL of any public GitHub codebase. Cortex will validate, clone, and dispatch a background indexing job.
             </p>
 
-            {isSubmitted ? (
-              <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-4 text-xs">
-                <div className="flex items-center gap-2 text-indigo-300 font-medium mb-1">
-                  <CheckCircle className="h-4 w-4 text-indigo-400" />
-                  <span>Validation Passed — URL Ready</span>
+            {submittedRepo ? (
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-4 text-xs">
+                <div className="flex items-center gap-2 text-emerald-300 font-medium mb-1">
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  <span>Repository Submitted &amp; Enqueued</span>
                 </div>
-                <p className="text-zinc-300 mt-2">
-                  Repository: <code className="font-mono text-white bg-zinc-950 px-1.5 py-0.5 rounded">{repoUrl}</code>
-                </p>
-                <div className="mt-4 rounded border border-amber-800/60 bg-amber-950/40 p-2.5 text-amber-200">
-                  <strong>Notice:</strong> Background cloning, Tree-sitter parsing, and Celery indexing jobs will be activated in <strong>Phase 4</strong>.
+                <div className="space-y-1.5 mt-3 text-zinc-300">
+                  <p>
+                    Target:{" "}
+                    <code className="font-mono text-white bg-zinc-950 px-1.5 py-0.5 rounded">
+                      {submittedRepo.owner}/{submittedRepo.name}
+                    </code>
+                  </p>
+                  <p>
+                    Branch:{" "}
+                    <span className="text-zinc-400 font-mono">
+                      {submittedRepo.default_branch}
+                    </span>
+                  </p>
+                  {submittedRepo.latest_commit_sha && (
+                    <p>
+                      Commit:{" "}
+                      <span className="text-indigo-400 font-mono text-[11px]">
+                        {submittedRepo.latest_commit_sha.slice(0, 7)}
+                      </span>
+                    </p>
+                  )}
+                  {submittedRepo.latest_job && (
+                    <p className="text-[11px] text-zinc-400 pt-1">
+                      Job ID:{" "}
+                      <span className="font-mono text-zinc-300">
+                        {submittedRepo.latest_job.id}
+                      </span>{" "}
+                      ({submittedRepo.latest_job.status})
+                    </p>
+                  )}
                 </div>
                 <div className="mt-4 flex justify-end">
                   <Button variant="outline" size="sm" onClick={handleClose}>
-                    Close
+                    Done
                   </Button>
                 </div>
               </div>
@@ -100,6 +173,7 @@ export function AddRepoDialog() {
                   label="GitHub Repository URL"
                   placeholder="https://github.com/psf/requests"
                   value={repoUrl}
+                  disabled={isSubmitting}
                   onChange={(e) => {
                     setRepoUrl(e.target.value);
                     if (error) setError("");
@@ -115,7 +189,7 @@ export function AddRepoDialog() {
                     <span>Security &amp; Pipeline Guardrails</span>
                   </div>
                   <p className="text-[11px] leading-relaxed">
-                    No code execution takes place. Binaries and large media files are excluded during indexing.
+                    Repository code is never executed. Repositories over 250 MB are rejected. Ingestion runs asynchronously via Celery workers.
                   </p>
                 </div>
 
@@ -124,12 +198,20 @@ export function AddRepoDialog() {
                     type="button"
                     variant="ghost"
                     size="sm"
+                    disabled={isSubmitting}
                     onClick={handleClose}
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" size="sm">
-                    Submit Repository
+                  <Button type="submit" size="sm" disabled={isSubmitting} className="gap-2">
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Validating...</span>
+                      </>
+                    ) : (
+                      <span>Submit Repository</span>
+                    )}
                   </Button>
                 </div>
               </form>

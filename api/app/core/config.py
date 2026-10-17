@@ -83,6 +83,11 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     EMBEDDING_DIMENSION: int = 384
 
+    # GitHub & Repository Limits (Phase 4)
+    GITHUB_TOKEN: str = ""
+    MAX_REPO_SIZE_MB: int = 250
+    MAX_REPO_FILE_COUNT: int = 5000
+
 
     @property
     def clerk_effective_issuer(self) -> str:
