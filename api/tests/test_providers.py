@@ -63,7 +63,7 @@ def test_groq_init_validation():
 
     provider = GroqChatProvider(api_key="gsk_test_key_placeholder")
     assert provider.provider_name == "groq"
-    assert provider.model_name == "llama-3.3-70b-versatile"
+    assert provider.model_name == "openai/gpt-oss-120b"
 
 
 @pytest.mark.asyncio

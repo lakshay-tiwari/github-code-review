@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { RepoList } from "@/components/dashboard/repo-list";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Database, GitFork, ShieldCheck } from "lucide-react";
 
 export default function DashboardPage() {
+  const [activeCount, setActiveCount] = useState<number | null>(null);
+
   return (
     <>
       <DashboardHeader
@@ -21,7 +26,9 @@ export default function DashboardPage() {
                 <p className="text-xs text-zinc-400 font-medium">
                   Active Repositories
                 </p>
-                <p className="text-2xl font-bold text-white mt-1">0</p>
+                <p className="text-2xl font-bold text-white mt-1">
+                  {activeCount !== null ? activeCount : "..."}
+                </p>
                 <p className="text-[11px] text-zinc-400 mt-0.5">
                   Phase 4 Ingestion Pipeline
                 </p>
@@ -81,7 +88,7 @@ export default function DashboardPage() {
               Connected Codebases
             </h2>
           </div>
-          <RepoList />
+          <RepoList onCountChange={setActiveCount} />
         </div>
       </main>
     </>

@@ -174,36 +174,54 @@ class ClerkTokenVerifier:
                 algorithms=["RS256"],
                 options={
                     "verify_signature": True,
-                    "require": ["exp", "iat", "sub"],
+                    "require": ["exp", "sub"],
                     "verify_exp": True,
                     "verify_iat": True,
                     "verify_nbf": True,
+                    "verify_aud": bool(self.expected_audience),
                 },
-                leeway=10,
-                issuer=self.expected_issuer if self.expected_issuer else None,
                 audience=self.expected_audience if self.expected_audience else None,
+                leeway=30,
             )
         except jwt.ExpiredSignatureError:
+            logger.warning("Token expired")
             raise ClerkAuthenticationError("Token has expired")
         except jwt.ImmatureSignatureError:
+            logger.warning("Token not yet active (nbf)")
             raise ClerkAuthenticationError("Token is not yet active (nbf)")
-        except jwt.InvalidIssuerError:
-            raise ClerkAuthenticationError("Invalid token issuer")
-        except jwt.InvalidAudienceError:
-            raise ClerkAuthenticationError("Invalid token audience")
         except jwt.InvalidSignatureError:
+            logger.warning("Token signature invalid against Clerk JWKS")
             raise ClerkAuthenticationError("Invalid token signature")
-        except jwt.InvalidTokenError:
-            raise ClerkAuthenticationError("Invalid authentication token")
+        except jwt.InvalidTokenError as ite:
+            logger.warning("Invalid token: %s", ite)
+            raise ClerkAuthenticationError(f"Invalid authentication token: {ite}")
+
+        # Tolerant issuer verification (normalize trailing slashes)
+        if self.expected_issuer:
+            token_iss = payload.get("iss")
+            if token_iss and token_iss.rstrip("/") != self.expected_issuer.rstrip("/"):
+                logger.warning(
+                    "Issuer mismatch: expected '%s', got '%s'",
+                    self.expected_issuer,
+                    token_iss,
+                )
+                raise ClerkAuthenticationError(
+                    f"Invalid token issuer: expected {self.expected_issuer}, "
+                    f"got {token_iss}"
+                )
 
         # Validate authorized party (azp) if configured
         if self.expected_azp:
             azp = payload.get("azp")
             if azp != self.expected_azp:
+                logger.warning(
+                    "AZP mismatch: expected '%s', got '%s'", self.expected_azp, azp
+                )
                 raise ClerkAuthenticationError("Invalid authorized party (azp)")
 
         user_id = payload.get("sub")
         if not user_id or not isinstance(user_id, str) or not user_id.strip():
+            logger.warning("Token missing valid subject (sub)")
             raise ClerkAuthenticationError("Token missing valid subject (sub)")
 
         return UserContext(

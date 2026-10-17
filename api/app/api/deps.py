@@ -62,6 +62,11 @@ async def get_current_user(
     try:
         user_context = await verifier.verify_token(token)
     except ClerkAuthenticationError as err:
+        import logging
+
+        logging.getLogger("cortex.auth").warning(
+            "Clerk authentication failed: %s", err.detail
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=err.detail,

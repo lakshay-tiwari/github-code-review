@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   FolderGit2,
   AlertTriangle,
@@ -11,6 +12,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,32 +42,46 @@ export interface RepositoryItem {
 
 interface RepoListProps {
   initialLoading?: boolean;
+  onCountChange?: (count: number) => void;
 }
 
-export function RepoList({ initialLoading = true }: RepoListProps) {
+export function RepoList({
+  initialLoading = true,
+  onCountChange,
+}: RepoListProps) {
   const [repositories, setRepositories] = useState<RepositoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(initialLoading);
   const [hasError, setHasError] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchRepositories = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) setIsRefreshing(true);
     try {
       const res = await fetch("/api/repositories", { cache: "no-store" });
       if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        setErrorMessage(
+          errorData.detail || errorData.error || "An error occurred connecting to the repository store."
+        );
         setHasError(true);
         return;
       }
       const data = await res.json();
-      setRepositories(data.repositories || []);
+      const items: RepositoryItem[] = data.repositories || data.items || [];
+      setRepositories(items);
+      onCountChange?.(items.length);
       setHasError(false);
-    } catch {
+      setErrorMessage(null);
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : "Failed to connect to backend");
       setHasError(true);
     } finally {
       setIsLoading(false);
       if (isManualRefresh) setIsRefreshing(false);
     }
-  }, []);
+  }, [onCountChange]);
 
   useEffect(() => {
     fetchRepositories();
@@ -89,7 +105,7 @@ export function RepoList({ initialLoading = true }: RepoListProps) {
 
   if (hasError) {
     return (
-      <Card className="border-red-900/50 bg-red-950/20 text-center py-12">
+      <Card className="border-red-900/50 bg-red-950/20 text-center py-12 px-6">
         <CardContent className="flex flex-col items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-900/40 text-red-400">
             <AlertTriangle className="h-6 w-6" />
@@ -98,21 +114,24 @@ export function RepoList({ initialLoading = true }: RepoListProps) {
             Unable to load repositories
           </h3>
           <p className="max-w-md text-xs text-zinc-400">
-            An error occurred connecting to the repository store. Please try again.
+            {errorMessage || "An error occurred connecting to the repository store. Please try again."}
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setIsLoading(true);
-              setHasError(false);
-              fetchRepositories();
-            }}
-            className="mt-2 gap-2"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span>Retry</span>
-          </Button>
+          <div className="mt-2 flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsLoading(true);
+                setHasError(false);
+                fetchRepositories();
+              }}
+              className="gap-2"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>Retry</span>
+            </Button>
+            <AddRepoDialog onSuccess={() => fetchRepositories(false)} />
+          </div>
         </CardContent>
       </Card>
     );
@@ -190,10 +209,19 @@ export function RepoList({ initialLoading = true }: RepoListProps) {
                 </div>
 
                 {repo.status === "ready" && (
-                  <Badge variant="success" className="gap-1 text-[10px]">
-                    <CheckCircle2 className="h-2.5 w-2.5" />
-                    <span>Ready</span>
-                  </Badge>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="success" className="gap-1 text-[10px]">
+                      <CheckCircle2 className="h-2.5 w-2.5" />
+                      <span>Ready</span>
+                    </Badge>
+                    <Link
+                      href={`/dashboard/chat?repo_id=${repo.id}`}
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-950/40 hover:bg-indigo-900/50 border border-indigo-800/40 px-2 py-0.5 rounded-md"
+                    >
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span>Chat</span>
+                    </Link>
+                  </div>
                 )}
                 {repo.status === "indexing" && (
                   <Badge variant="warning" className="gap-1 text-[10px]">

@@ -16,8 +16,11 @@ cortex-2/
 │   └── architecture.md      # Detailed system architecture and networking guide
 ├── .env.example             # Environment variable template
 ├── .gitignore               # Multi-stack repository ignore rules
-└── README.md                # Quickstart and run instructions
+├── RUN_GUIDE.md             # Complete step-by-step local run guide
+└── README.md                # Quickstart and overview
 ```
+
+> **Quickstart Guide:** For copy-pasteable terminal commands to run all 4 processes, see **[RUN_GUIDE.md](RUN_GUIDE.md)**.
 
 See [docs/architecture.md](docs/architecture.md) for detailed service responsibilities, host vs. container networking, and data flow diagrams.
 

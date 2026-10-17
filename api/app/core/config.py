@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     """Application settings with environment variable overrides."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     # LLM Configuration (Phase 3C)
     LLM_PROVIDER: str = "groq"
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
     LLM_TEMPERATURE: float = 0.2
 
     # Embedding Configuration (Phase 3C)

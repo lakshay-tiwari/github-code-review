@@ -13,7 +13,7 @@ class GroqChatProvider(BaseChatModel):
     def __init__(
         self,
         api_key: str,
-        model: str = "llama-3.3-70b-versatile",
+        model: str = "openai/gpt-oss-120b",
         temperature: float = 0.2,
         max_retries: int = 2,
     ) -> None:
