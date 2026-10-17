@@ -3,6 +3,7 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
+from app.core.guardrails import RAGGuardrails
 from app.domain.models import Message
 from app.infrastructure.checkpoint import get_checkpointer
 from app.infrastructure.db.session import async_session_factory
@@ -116,6 +117,11 @@ class ChatStreamingService:
                 ):
                     accumulated_text += chunk
                     yield sse_pack("chunk", chunk)
+
+            # Redact any accidental credential leakage before database commit
+            accumulated_text = RAGGuardrails.inspect_for_secret_leakage(
+                accumulated_text
+            )
 
             # Persist assistant message in PostgreSQL
             async with async_session_factory() as session:

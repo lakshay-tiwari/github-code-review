@@ -4,24 +4,28 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from app.infrastructure.embeddings.factory import get_embedding_provider
+from app.infrastructure.graph.factory import get_graph_store
 from app.infrastructure.vector.factory import get_vector_store
 from app.infrastructure.vector.interfaces import ChunkPayload
 from app.services.chunker import CodeChunker
+from app.services.code_graph import CodeGraphService
 from app.services.file_filter import is_binary_content, should_index_file
 
 logger = logging.getLogger(__name__)
 
 
 class RepositoryIndexer:
-    """Orchestrates file discovery, chunking, embedding, and vector upsert."""
+    """Orchestrates file discovery, chunking, embedding, vector upsert, and graph."""
 
     def __init__(
         self,
         batch_size: int = 64,
         chunker: CodeChunker | None = None,
+        graph_service: CodeGraphService | None = None,
     ) -> None:
         self.batch_size = batch_size
         self.chunker = chunker or CodeChunker()
+        self.graph_service = graph_service or CodeGraphService(get_graph_store())
 
     async def index_directory(
         self,
@@ -98,6 +102,19 @@ class RepositoryIndexer:
                 if chunks:
                     all_chunks.extend(chunks)
                     files_indexed_count += 1
+
+                # Extract and persist code graph entities (functions, classes, imports)
+                try:
+                    await self.graph_service.index_file(
+                        repository_id=repository_id,
+                        commit_sha=commit_sha,
+                        file_path=rel_path,
+                        content=content,
+                    )
+                except Exception as graph_err:
+                    logger.debug(
+                        "Graph extraction skipped for %s: %s", rel_path, graph_err
+                    )
 
             except Exception as exc:
                 logger.warning("Failed to chunk file %s: %s", rel_path, exc)

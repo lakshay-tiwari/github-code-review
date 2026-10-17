@@ -88,6 +88,16 @@ class Settings(BaseSettings):
     MAX_REPO_SIZE_MB: int = 250
     MAX_REPO_FILE_COUNT: int = 5000
 
+    # Mem0 Long-Term Memory (Phase 7)
+    MEM0_ENABLED: bool = False
+    MEM0_COLLECTION_NAME: str = "cortex_user_memory"
+
+    # LangSmith Tracing & Observability (Phase 7)
+    LANGSMITH_TRACING: bool = False
+    LANGSMITH_API_KEY: str = ""
+    LANGSMITH_PROJECT: str = "cortex"
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+
 
     @property
     def clerk_effective_issuer(self) -> str:

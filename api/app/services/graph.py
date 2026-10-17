@@ -3,6 +3,7 @@ from typing import Any, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from app.core.guardrails import RAGGuardrails
 from app.infrastructure.checkpoint import get_checkpointer
 from app.infrastructure.llm.factory import get_chat_model
 from app.infrastructure.llm.interfaces import BaseChatModel, ChatMessage
@@ -79,13 +80,14 @@ async def retrieve_context_node(
 
     for r in results:
         p = r.payload
+        clean_content = RAGGuardrails.sanitize_untrusted_code(p.content)
         chunk_dict = {
             "file_path": p.file_path,
             "start_line": p.start_line,
             "end_line": p.end_line,
             "commit_sha": p.commit_sha,
             "symbol_name": p.symbol_name,
-            "content": p.content,
+            "content": clean_content,
             "score": r.score,
         }
         chunks.append(chunk_dict)
@@ -94,7 +96,7 @@ async def retrieve_context_node(
         if p.symbol_name:
             header += f" [{p.symbol_name}]"
         header += " ---"
-        context_parts.append(f"{header}\n{p.content}\n")
+        context_parts.append(f"{header}\n{clean_content}\n")
 
     context_str = "\n".join(context_parts)
     return {

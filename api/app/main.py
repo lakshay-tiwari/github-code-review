@@ -1,3 +1,5 @@
+import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -8,14 +10,29 @@ from app.api.v1.router import HealthResponse, api_v1_router
 from app.core.config import settings
 from app.infrastructure.checkpoint import close_checkpointer_pool
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifecycle event handler for startup and shutdown."""
     # Startup: Initialize resources (DB connections, caches, etc.)
+    if settings.LANGSMITH_TRACING and settings.LANGSMITH_API_KEY:
+        os.environ["LANGSMITH_TRACING"] = "true"
+        os.environ["LANGSMITH_API_KEY"] = settings.LANGSMITH_API_KEY
+        os.environ["LANGSMITH_PROJECT"] = settings.LANGSMITH_PROJECT
+        os.environ["LANGSMITH_ENDPOINT"] = settings.LANGSMITH_ENDPOINT
+        logger.info(
+            "LangSmith tracing enabled for project '%s'",
+            settings.LANGSMITH_PROJECT,
+        )
+    else:
+        os.environ["LANGSMITH_TRACING"] = "false"
+
     yield
     # Shutdown: Clean up resources
     await close_checkpointer_pool()
+
 
 
 
