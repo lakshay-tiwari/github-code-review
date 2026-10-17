@@ -116,27 +116,25 @@ This document establishes the architecture, dependencies, file paths, environmen
 
 ---
 
-### Subphase 3E — Graph-Store Interface and Neo4j Adapter
+### Subphase 3E — Graph-Store Interface and Neo4j Adapter [COMPLETED]
 
 1. **Prerequisites & Dependencies**:
    - Neo4j 5 Community container running and healthy on host port `7474`/`7687`.
-   - Packages: `neo4j>=5.26.0`.
-2. **Expected Files Under `api/`**:
-   - `api/app/infrastructure/graph/interfaces.py` (`BaseGraphStore` protocol: `upsert_nodes`, `upsert_relationships`, `get_neighbors`, `delete_repository`)
-   - `api/app/infrastructure/graph/neo4j_adapter.py` (`Neo4jGraphStoreAdapter` with parameterized Cypher queries)
-   - `api/tests/test_neo4j.py`
-3. **Existing Code to Reuse**:
-   - [`api/app/core/config.py`](../api/app/core/config.py): `settings.NEO4J_URI`, `settings.NEO4J_USER`, `settings.NEO4J_PASSWORD`.
-   - [`infra/docker-compose.yml`](../infra/docker-compose.yml): Running `neo4j` container.
-4. **Required Environment Variables & Packages**:
-   - `NEO4J_URI=bolt://localhost:7687`, `NEO4J_USER=neo4j`, `NEO4J_PASSWORD=cortex_dev_password`
-5. **Tests & Verification Criteria**:
-   - Mocked driver tests ensuring all queries use parameterized Cypher (no string concatenation).
-   - Scoped queries verify filtering by `repository_id` and `commit_sha`.
-   - Integration test with running Neo4j container verifying session management and constraint creation.
-6. **Risks & Compatibility Questions**:
-   - *Risk*: Connection leaks if driver sessions are not closed properly in async tasks.
-   - *Mitigation*: Manage driver lifecycle via async context managers (`AsyncGraphDatabase.driver`).
+   - Packages: `neo4j>=5.26.0` (installed `6.4.1`).
+2. **Files Created Under `api/`**:
+   - [`api/app/infrastructure/graph/interfaces.py`](../api/app/infrastructure/graph/interfaces.py) (`GraphNode`, `GraphRelationship`, `GraphNeighborhood`, `BaseGraphStore`)
+   - [`api/app/infrastructure/graph/neo4j_adapter.py`](../api/app/infrastructure/graph/neo4j_adapter.py) (`Neo4jGraphStoreAdapter` with parameterized Cypher queries, regex relationship type validation, dictionary deserialization, composite indexes, and `:CodeNode` logical label isolation)
+   - [`api/app/infrastructure/graph/factory.py`](../api/app/infrastructure/graph/factory.py) (`get_graph_store`, `reset_graph_store_instance`)
+   - [`api/app/infrastructure/graph/__init__.py`](../api/app/infrastructure/graph/__init__.py)
+   - [`api/tests/test_neo4j.py`](../api/tests/test_neo4j.py) (8 tests: 6 unit/mock tests + 2 live Docker integration tests covering health, schema constraints, multi-tenant node CRUD, scoped neighborhood queries, cross-repo isolation, and scoped repository deletion)
+3. **Existing Code Reused**:
+   - [`api/app/core/config.py`](../api/app/core/config.py): `settings.NEO4J_URI`, `settings.NEO4J_USER`, `settings.NEO4J_PASSWORD`, `settings.NEO4J_DATABASE`, `settings.NEO4J_MAX_CONNECTION_POOL_SIZE`.
+   - [`infra/docker-compose.yml`](../infra/docker-compose.yml): running `cortex-neo4j` container.
+4. **Verification Results**:
+   - Live Neo4j integration verified against Docker container on port 7687 (`bolt://localhost:7687`).
+   - Strict parameterized Cypher verified with zero user-input string interpolation.
+   - Cross-repository and cross-commit isolation confirmed in live integration test.
+
 
 ---
 

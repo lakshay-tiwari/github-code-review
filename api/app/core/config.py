@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     NEO4J_USER: str = "neo4j"
     NEO4J_PASSWORD: str = "cortex_dev_password"
     NEO4J_URI: str = "bolt://localhost:7687"
+    NEO4J_DATABASE: str = "neo4j"
+    NEO4J_MAX_CONNECTION_POOL_SIZE: int = 50
+
 
     # Authentication (Clerk)
     CLERK_SECRET_KEY: str = ""
