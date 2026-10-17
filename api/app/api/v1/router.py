@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 from app import __version__
 from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.conversations import router as conversations_router
 from app.api.v1.endpoints.jobs import router as jobs_router
 from app.api.v1.endpoints.repositories import router as repositories_router
 from app.core.config import settings
@@ -13,6 +14,7 @@ api_v1_router = APIRouter()
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(repositories_router)
 api_v1_router.include_router(jobs_router)
+api_v1_router.include_router(conversations_router)
 
 
 class HealthResponse(BaseModel):

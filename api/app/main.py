@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import __version__
 from app.api.v1.router import HealthResponse, api_v1_router
 from app.core.config import settings
+from app.infrastructure.checkpoint import close_checkpointer_pool
 
 
 @asynccontextmanager
@@ -14,6 +15,8 @@ async def lifespan(app: FastAPI):
     # Startup: Initialize resources (DB connections, caches, etc.)
     yield
     # Shutdown: Clean up resources
+    await close_checkpointer_pool()
+
 
 
 app = FastAPI(
