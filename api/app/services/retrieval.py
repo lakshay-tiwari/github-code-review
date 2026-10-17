@@ -37,3 +37,22 @@ class SemanticRetrievalService:
         )
 
         return results
+
+    async def get_indexed_files(
+        self,
+        repository_id: str,
+        commit_sha: str | None = None,
+        limit: int = 500,
+    ) -> list[str]:
+        """Return sorted list of distinct file paths indexed for a repository.
+
+        Delegates to the vector store's payload-only scroll so no embeddings
+        are computed. Results are scoped to the repository (and commit when
+        provided) and never cross repository boundaries.
+        """
+        vector_store = get_vector_store()
+        return await vector_store.scroll_distinct_files(
+            repository_id=repository_id,
+            commit_sha=commit_sha,
+            limit=limit,
+        )

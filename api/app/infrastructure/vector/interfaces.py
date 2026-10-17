@@ -116,6 +116,21 @@ class BaseVectorStore(ABC):
         ...
 
     @abstractmethod
+    async def scroll_distinct_files(
+        self,
+        repository_id: str,
+        commit_sha: str | None = None,
+        limit: int = 500,
+    ) -> list[str]:
+        """Return distinct file paths indexed for a repository/commit.
+
+        Uses payload-only scrolling (no vector computation). Results are
+        de-duplicated and sorted. `limit` caps total points scrolled to
+        avoid memory issues on very large repositories.
+        """
+        ...
+
+    @abstractmethod
     async def health_check(self) -> dict[str, Any]:
         """Check operational health and reachability of the vector store."""
         ...

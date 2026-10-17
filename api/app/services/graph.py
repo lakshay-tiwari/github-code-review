@@ -7,6 +7,7 @@ from app.core.guardrails import RAGGuardrails
 from app.infrastructure.checkpoint import get_checkpointer
 from app.infrastructure.llm.factory import get_chat_model
 from app.infrastructure.llm.interfaces import BaseChatModel, ChatMessage
+from app.services.classifier import RETRIEVAL_PRESETS, classify_question
 from app.services.retrieval import SemanticRetrievalService
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,9 @@ class CodebaseQAState(TypedDict):
     commit_sha: str | None
     history: list[dict[str, str]]
 
+    # Classification
+    question_intent: str  # file_specific | symbol_specific | workflow | repository_wide
+
     # Retrieval outputs
     retrieved_chunks: list[dict[str, Any]]
     context_str: str
@@ -50,31 +54,115 @@ class CodebaseQAState(TypedDict):
     answer: str
 
 
+def _extract_file_prefix(question: str) -> str | None:
+    """Extract a file path prefix hint from a file-specific question.
+
+    Returns the path prefix token when a known file path pattern is found
+    (e.g. 'explain src/auth.py' → 'src/auth.py'), otherwise None.
+    Only used when intent == 'file_specific' to scope the Qdrant filter.
+    """
+    import re
+
+    # Match anything that looks like a path with a file extension
+    m = re.search(r"([\w/.\-]+\.\w{1,6})", question)
+    if m:
+        candidate = m.group(1)
+        # Ignore very short tokens that are unlikely file paths (e.g. "a.b")
+        if len(candidate) >= 4 and "/" in candidate or "." in candidate:
+            return candidate
+    return None
+
+
 async def retrieve_context_node(
     state: CodebaseQAState,
     retrieval_service: SemanticRetrievalService | None = None,
 ) -> dict[str, Any]:
-    """Retrieve grounded code chunks from Qdrant scoped to repository and commit."""
+    """Retrieve grounded code chunks from Qdrant scoped to repository and commit.
+
+    Retrieval strategy is driven by question intent:
+
+    file_specific    → use file_path_prefix filter when a path is found in the
+                       question; lower score threshold to catch more of the file
+    symbol_specific  → standard single-shot with moderate limit
+    workflow         → wider limit; no file scoping; expand if sparse
+    repository_wide  → widest limit; expand once if < min_chunks found;
+                       logs the full indexed file inventory for diagnostics
+    """
     service = retrieval_service or SemanticRetrievalService()
     question = state["question"]
     repository_id = state["repository_id"]
     commit_sha = state.get("commit_sha")
 
+    # 1. Classify question intent
+    intent = classify_question(question)
+    presets = RETRIEVAL_PRESETS[intent]
+
     logger.info(
-        "Retrieving context for repo=%s commit=%s query='%s'",
+        "Retrieval: repo=%s commit=%s intent=%s query='%s'",
         repository_id,
         commit_sha,
-        question[:50],
+        intent,
+        question[:60],
     )
 
+    # 2. Resolve file prefix hint for file-specific questions
+    file_prefix: str | None = None
+    if intent == "file_specific":
+        file_prefix = _extract_file_prefix(question)
+        if file_prefix:
+            logger.debug("Using file_path_prefix filter: %s", file_prefix)
+
+    # 3. Initial vector search
     results = await service.search(
         query=question,
         repository_id=repository_id,
         commit_sha=commit_sha,
-        limit=8,
-        score_threshold=0.3,
+        limit=presets["limit"],
+        score_threshold=presets["score_threshold"],
+        file_path_prefix=file_prefix,
     )
 
+    # 4. Bounded expansion: retry at a wider limit when initial results are sparse
+    min_for_expansion: int = presets["min_chunks_for_expansion"]
+    if len(results) < min_for_expansion:
+        logger.info(
+            "Expanding retrieval: got %d chunks (< %d required), retrying at limit=%d",
+            len(results),
+            min_for_expansion,
+            presets["expansion_limit"],
+        )
+        expanded = await service.search(
+            query=question,
+            repository_id=repository_id,
+            commit_sha=commit_sha,
+            limit=presets["expansion_limit"],
+            # Slightly relaxed threshold for expansion pass
+            score_threshold=max(0.10, (presets["score_threshold"] or 0.25) - 0.10),
+            file_path_prefix=file_prefix,
+        )
+        # Merge, de-duplicate by chunk_id, keep all for context
+        seen_ids: set[str] = {r.chunk_id for r in results}
+        for r in expanded:
+            if r.chunk_id not in seen_ids:
+                results.append(r)
+                seen_ids.add(r.chunk_id)
+
+    # 5. For repository-wide questions, log the full indexed file list
+    if intent == "repository_wide":
+        try:
+            indexed_files = await service.get_indexed_files(
+                repository_id=repository_id,
+                commit_sha=commit_sha,
+            )
+            logger.info(
+                "Repository inventory: %d indexed files for repo=%s",
+                len(indexed_files),
+                repository_id,
+            )
+        except Exception as inv_err:
+            logger.debug("Could not fetch file inventory: %s", inv_err)
+
+    # 6. Build context string from retrieved results
     chunks: list[dict[str, Any]] = []
     context_parts: list[str] = []
 
@@ -100,16 +188,27 @@ async def retrieve_context_node(
 
     context_str = "\n".join(context_parts)
     return {
+        "question_intent": intent,
         "retrieved_chunks": chunks,
         "context_str": context_str,
     }
 
 
 def validate_evidence_node(state: CodebaseQAState) -> dict[str, Any]:
-    """Validate whether retrieved chunks provide sufficient evidence."""
+    """Validate whether retrieved chunks provide sufficient evidence.
+
+    For repository-wide and workflow questions, require at least 2 distinct
+    files to be represented — a single-file result is almost certainly
+    insufficient for a broad question.
+    """
     chunks = state.get("retrieved_chunks", [])
+    intent = state.get("question_intent", "symbol_specific")
+
     if not chunks or not state.get("context_str", "").strip():
-        logger.info("Insufficient evidence retrieved for query: %s", state["question"])
+        logger.info(
+            "Insufficient evidence: no chunks retrieved for '%s'",
+            state["question"],
+        )
         return {
             "has_sufficient_evidence": False,
             "citations": [],
@@ -120,6 +219,33 @@ def validate_evidence_node(state: CodebaseQAState) -> dict[str, Any]:
                 "been indexed."
             ),
         }
+
+    # Coverage check for broad questions
+    presets = RETRIEVAL_PRESETS.get(intent, RETRIEVAL_PRESETS["symbol_specific"])
+    required_files: int = presets["required_distinct_files"]
+
+    if required_files > 1:
+        distinct_files = {c["file_path"] for c in chunks}
+        if len(distinct_files) < required_files:
+            logger.info(
+                "Insufficient evidence: %d distinct file(s) found, need >= %d "
+                "for intent='%s' query='%s'",
+                len(distinct_files),
+                required_files,
+                intent,
+                state["question"],
+            )
+            return {
+                "has_sufficient_evidence": False,
+                "citations": [],
+                "answer": (
+                    f"I found some evidence in {len(distinct_files)} file(s), "
+                    f"but a question of this scope typically requires evidence "
+                    f"from multiple parts of the codebase. The repository may not "
+                    f"be fully indexed, or the question may be outside the scope "
+                    f"of indexed content. Try asking about a specific file or function."
+                ),
+            }
 
     # Extract verified citations from actual retrieved chunks
     citations = [
@@ -246,6 +372,7 @@ class CodebaseQAService:
             "repository_id": repository_id,
             "commit_sha": commit_sha,
             "history": history or [],
+            "question_intent": "",
             "retrieved_chunks": [],
             "context_str": "",
             "has_sufficient_evidence": False,

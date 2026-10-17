@@ -227,6 +227,59 @@ class QdrantVectorStoreAdapter(BaseVectorStore):
         )
         return len(must_conditions)
 
+    async def scroll_distinct_files(
+        self,
+        repository_id: str,
+        commit_sha: str | None = None,
+        limit: int = 500,
+    ) -> list[str]:
+        """Return sorted distinct file paths indexed for a repository/commit.
+
+        Uses Qdrant scroll (payload-only, no vector) to enumerate points,
+        collects unique file_path values, and returns a sorted list.
+        """
+        must_conditions: list[models.FieldCondition] = [
+            models.FieldCondition(
+                key="repository_id",
+                match=models.MatchValue(value=str(repository_id)),
+            )
+        ]
+        if commit_sha:
+            must_conditions.append(
+                models.FieldCondition(
+                    key="commit_sha",
+                    match=models.MatchValue(value=commit_sha),
+                )
+            )
+
+        scroll_filter = models.Filter(must=must_conditions)  # type: ignore
+
+        file_paths: set[str] = set()
+        offset = None
+        batch_size = min(limit, 200)
+        total_scanned = 0
+
+        while total_scanned < limit:
+            records, next_offset = await self._client.scroll(
+                collection_name=self._collection_name,
+                scroll_filter=scroll_filter,
+                limit=batch_size,
+                offset=offset,
+                with_payload=["file_path"],
+                with_vectors=False,
+            )
+
+            for record in records:
+                if record.payload and "file_path" in record.payload:
+                    file_paths.add(record.payload["file_path"])
+
+            total_scanned += len(records)
+            if next_offset is None or len(records) < batch_size:
+                break
+            offset = next_offset
+
+        return sorted(file_paths)
+
     async def health_check(self) -> dict[str, Any]:
         """Check connection health and verify collection existence."""
         collections_response = await self._client.get_collections()
