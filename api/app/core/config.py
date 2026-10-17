@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str | None = "redis://localhost:6379/1"
+    CELERY_TASK_DEFAULT_QUEUE: str = "cortex_default"
 
     QDRANT_HOST: str = "localhost"
     QDRANT_HTTP_PORT: int = 6333

@@ -24,6 +24,8 @@ dependencies = [
     "sentence-transformers>=3.3.0",
     "qdrant-client>=1.12.0",
     "neo4j>=5.26.0",
+    "celery>=5.4.0",
+    "redis>=5.2.0",
 ]
 
 [project.optional-dependencies]

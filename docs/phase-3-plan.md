@@ -138,25 +138,24 @@ This document establishes the architecture, dependencies, file paths, environmen
 
 ---
 
-### Subphase 3F — Celery and Redis Queue Foundation
+### Subphase 3F — Celery and Redis Queue Foundation [COMPLETED]
 
 1. **Prerequisites & Dependencies**:
    - Redis 7 container running and healthy on host port `6379`.
    - Subphase 3A models (for durable job updates).
-   - Packages: `celery>=5.4.0`, `redis>=5.2.0`.
-2. **Expected Files Under `api/`**:
-   - `api/app/workers/celery_app.py` (Celery application instance, task autodiscovery, JSON serialization, broker URL)
-   - `api/app/workers/tasks.py` (Smoke task `ping_task`, task base classes with error logging)
-   - `api/tests/test_workers.py`
-3. **Existing Code to Reuse**:
-   - [`api/app/core/config.py`](../api/app/core/config.py): `settings.REDIS_URL`.
-   - [`infra/docker-compose.yml`](../infra/docker-compose.yml): Running `redis` container.
-4. **Required Environment Variables & Packages**:
-   - `REDIS_URL=redis://localhost:6379/0`, `CELERY_BROKER_URL=redis://localhost:6379/0`
-5. **Tests & Verification Criteria**:
-   - Test task registration and importability in standalone worker mode (`celery -A app.workers.celery_app inspect registered`).
-   - Test smoke task execution locally and verify result.
-   - Verify Redis is not used as the durable application database (PostgreSQL owns job records).
-6. **Risks & Compatibility Questions**:
-   - *Risk*: Code duplication between FastAPI and Celery.
-   - *Mitigation*: Celery worker imports the exact same `app.*` package modules, database models, and adapters as FastAPI.
+   - Packages: `celery>=5.4.0` (installed `5.6.3`), `redis>=5.2.0` (installed `8.1.0`).
+2. **Files Created Under `api/`**:
+   - [`api/app/workers/celery_app.py`](../api/app/workers/celery_app.py) (Celery application instance bound to shared `cortex` app, strict JSON serialization, Redis broker & result backend, time limits: 1800s hard / 1500s soft, `task_acks_late=True`, `worker_prefetch_multiplier=1`)
+   - [`api/app/workers/tasks.py`](../api/app/workers/tasks.py) (`LoggingTask` base class, `ping_task` smoke task, `enqueue_smoke_ping` queue submission boundary)
+   - [`api/app/workers/__init__.py`](../api/app/workers/__init__.py)
+   - [`api/tests/test_workers.py`](../api/tests/test_workers.py) (6 tests covering queue configuration, task registration/importability, synchronous direct execution, queue submission boundary, structured failure logging, and Celery eager execution)
+3. **Existing Code Reused**:
+   - [`api/app/core/config.py`](../api/app/core/config.py): `settings.REDIS_URL`, `settings.CELERY_BROKER_URL`, `settings.CELERY_RESULT_BACKEND`, `settings.CELERY_TASK_DEFAULT_QUEUE`.
+   - [`infra/docker-compose.yml`](../infra/docker-compose.yml): running `cortex-redis` container.
+4. **Verification Results**:
+   - Live worker test executed against local Docker Redis on port 6379 (`celery -A app.workers.celery_app worker`), verified end-to-end task pickup, execution, and result retrieval (`{'status': 'success', 'echo': 'hello_real_worker'}`).
+   - Standalone execution command for Celery worker:
+     `celery -A app.workers.celery_app worker --loglevel=info --concurrency=2 -Q cortex_default`
+   - Standalone execution command for FastAPI:
+     `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload`
+
