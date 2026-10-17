@@ -39,3 +39,38 @@ class RepositoryListResponse(BaseModel):
 
     repositories: list[RepositoryResponse]
     total: int
+
+
+class SearchRequest(BaseModel):
+    """Schema for semantic code search request."""
+
+    query: str = Field(description="Search query string")
+    limit: int = Field(default=10, ge=1, le=50, description="Max results")
+    score_threshold: float | None = Field(
+        default=0.4, description="Minimum cosine similarity score"
+    )
+
+
+class SearchResultItem(BaseModel):
+    """Schema for a single retrieved code chunk with citations."""
+
+    chunk_id: str
+    score: float
+    file_path: str
+    start_line: int
+    end_line: int
+    language: str
+    symbol_name: str | None = None
+    symbol_type: str | None = None
+    content: str
+    commit_sha: str
+
+
+class SearchResponse(BaseModel):
+    """Schema for semantic search response."""
+
+    query: str
+    repository_id: uuid.UUID
+    commit_sha: str | None = None
+    results: list[SearchResultItem]
+    total: int

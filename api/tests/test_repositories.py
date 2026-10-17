@@ -435,24 +435,37 @@ async def test_index_repository_task_eager(db_session):
         patch.object(
             GitHubService, "get_latest_commit_sha", return_value=mock_sha
         ),
+        patch(
+            "app.services.cloner.RepositoryCloner.download_and_extract_tarball"
+        ) as mock_clone,
+        patch(
+            "app.services.indexer.RepositoryIndexer.index_directory"
+        ) as mock_index_dir,
     ):
+        mock_clone.return_value = "/tmp/dummy_extracted_path"
+        mock_index_dir.return_value = {
+            "total_files": 1,
+            "indexed_files": 1,
+            "total_chunks": 2,
+            "upserted_vectors": 2,
+        }
+
         # Run Celery task synchronously via .apply()
         task_res = index_repository_task.apply(kwargs={"job_id": str(job.id)})
         assert task_res.successful()
         result_data = task_res.result
         assert result_data["status"] == "success"
         assert result_data["commit_sha"] == mock_sha
-        assert result_data["step"] == "ready_for_indexing"
 
         # Verify job and repository state updated in PostgreSQL
         await db_session.refresh(job)
         await db_session.refresh(repo)
 
-        assert job.status == "in_progress"
-        assert job.progress == 50
-        assert job.current_step == "ready_for_indexing"
+        assert job.status == "completed"
+        assert job.progress == 100
+        assert job.current_step == "completed"
         assert job.commit_sha == mock_sha
-        assert repo.status == "indexing"
+        assert repo.status == "ready"
         assert repo.latest_commit_sha == mock_sha
 
     # Clean up

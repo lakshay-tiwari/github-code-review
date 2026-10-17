@@ -26,6 +26,8 @@ dependencies = [
     "neo4j>=5.26.0",
     "celery>=5.4.0",
     "redis>=5.2.0",
+    "tree-sitter==0.21.3",
+    "tree-sitter-languages>=1.10.0",
 ]
 
 [project.optional-dependencies]

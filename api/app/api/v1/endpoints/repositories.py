@@ -15,6 +15,9 @@ from app.schemas.repository import (
     RepositoryCreate,
     RepositoryListResponse,
     RepositoryResponse,
+    SearchRequest,
+    SearchResponse,
+    SearchResultItem,
 )
 from app.services.github import GitHubError, GitHubService
 from app.workers.tasks import enqueue_index_repository
@@ -270,3 +273,50 @@ async def delete_repository(
     # Delete repository from PostgreSQL (cascades to jobs, conversations, messages)
     await db.delete(repo)
     await db.commit()
+
+
+@router.post(
+    "/{repository_id}/search",
+    response_model=SearchResponse,
+    summary="Semantic Code Search",
+    description="Perform vector similarity search over indexed code in the repository.",
+)
+async def search_repository(
+    payload: SearchRequest,
+    repo: Repository = Depends(require_repository_ownership),
+) -> SearchResponse:
+    """Execute semantic code search scoped strictly to repository and commit."""
+    from app.services.retrieval import SemanticRetrievalService
+
+    retrieval_service = SemanticRetrievalService()
+    results = await retrieval_service.search(
+        query=payload.query,
+        repository_id=str(repo.id),
+        commit_sha=repo.latest_commit_sha,
+        limit=payload.limit,
+        score_threshold=payload.score_threshold,
+    )
+
+    items = [
+        SearchResultItem(
+            chunk_id=r.chunk_id,
+            score=r.score,
+            file_path=r.payload.file_path,
+            start_line=r.payload.start_line,
+            end_line=r.payload.end_line,
+            language=r.payload.language,
+            symbol_name=r.payload.symbol_name,
+            symbol_type=r.payload.symbol_type,
+            content=r.payload.content,
+            commit_sha=r.payload.commit_sha,
+        )
+        for r in results
+    ]
+
+    return SearchResponse(
+        query=payload.query,
+        repository_id=repo.id,
+        commit_sha=repo.latest_commit_sha,
+        results=items,
+        total=len(items),
+    )

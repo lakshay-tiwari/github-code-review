@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import tempfile
 import uuid
 from datetime import UTC, datetime
 from typing import Any
@@ -9,8 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from app.domain.models import IngestionJob
-from app.infrastructure.db.session import async_session_factory
+from app.infrastructure.db.session import get_task_session
+from app.services.cloner import RepositoryCloner
 from app.services.github import GitHubError, GitHubService
+from app.services.indexer import RepositoryIndexer
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -75,7 +78,7 @@ async def _execute_index_job(job_id: str) -> dict[str, Any]:
     job_uuid = uuid.UUID(job_id)
     github_service = GitHubService()
 
-    async with async_session_factory() as session:
+    async with get_task_session() as session:
         # Load job with repository
         res = await session.execute(
             select(IngestionJob)
@@ -113,16 +116,41 @@ async def _execute_index_job(job_id: str) -> dict[str, Any]:
             job.commit_sha = commit_sha
             repo.latest_commit_sha = commit_sha
 
+            # 3. Download and extract repository archive into isolated temp directory
+            cloner = RepositoryCloner()
+            indexer = RepositoryIndexer()
+
             job.progress = 40
-            job.current_step = "metadata_verified"
+            job.current_step = "downloading"
             await session.commit()
 
-            # Phase 4 checkpoint: preparation verified.
-            # Full chunking & embeddings in Phase 5
-            job.progress = 50
-            job.current_step = "ready_for_indexing"
-            job.status = "in_progress"
-            repo.status = "indexing"
+            with tempfile.TemporaryDirectory() as temp_dir:
+                root_extracted = await cloner.download_and_extract_tarball(
+                    owner=repo.owner,
+                    repo=repo.name,
+                    commit_sha=commit_sha,
+                    destination_dir=temp_dir,
+                )
+
+                async def on_progress(pct: int, step: str) -> None:
+                    job.progress = pct
+                    job.current_step = step
+                    await session.commit()
+
+                index_summary = await indexer.index_directory(
+                    repository_id=str(repo.id),
+                    commit_sha=commit_sha,
+                    root_dir=root_extracted,
+                    progress_callback=on_progress,
+                )
+
+            # 4. Finalize job and mark repository ready
+            job.progress = 100
+            job.current_step = "completed"
+            job.status = "completed"
+            job.completed_at = datetime.now(UTC)
+            repo.status = "ready"
+            repo.error_message = None
             await session.commit()
 
             return {
@@ -130,7 +158,7 @@ async def _execute_index_job(job_id: str) -> dict[str, Any]:
                 "job_id": str(job.id),
                 "repository_id": str(repo.id),
                 "commit_sha": commit_sha,
-                "step": job.current_step,
+                "summary": index_summary,
             }
 
         except GitHubError as g_err:

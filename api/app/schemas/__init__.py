@@ -3,6 +3,9 @@ from app.schemas.repository import (
     RepositoryCreate,
     RepositoryListResponse,
     RepositoryResponse,
+    SearchRequest,
+    SearchResponse,
+    SearchResultItem,
 )
 
 __all__ = [
@@ -10,4 +13,7 @@ __all__ = [
     "RepositoryCreate",
     "RepositoryResponse",
     "RepositoryListResponse",
+    "SearchRequest",
+    "SearchResponse",
+    "SearchResultItem",
 ]
