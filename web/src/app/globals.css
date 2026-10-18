@@ -1,4 +1,11 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
+
+/* Code highlight styles seamlessly blended with container */
+.hljs {
+  background: transparent !important;
+  padding: 0 !important;
+}
 
 :root {
   --background: #ffffff;
