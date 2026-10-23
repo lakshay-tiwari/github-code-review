@@ -735,11 +735,11 @@ export default function ChatWorkspacePage() {
             <div className="h-7 w-7 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
               <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
             </div>
-            <div className="min-w-0 hidden sm:block">
-              <p className="text-xs font-semibold text-white leading-none truncate">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-white leading-none shrink-0">
                 Cortex RAG
               </p>
-              <p className="text-[10px] text-zinc-500 mt-0.5 leading-none truncate">
+              <p className="text-[10px] text-zinc-500 mt-0.5 leading-none truncate hidden xl:block">
                 Grounded · Technical Architecture View
               </p>
             </div>
@@ -945,7 +945,7 @@ export default function ChatWorkspacePage() {
                 <div className="px-5 sm:px-6 py-5">
                   {streamingText ? (
                     <div>
-                      <MarkdownRenderer content={streamingText} />
+                      <MarkdownRenderer content={streamingText} isStreaming />
                       <div className="flex items-center gap-2 mt-4 text-xs text-indigo-400/80 animate-pulse">
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
                         <span className="text-[11px]">Streaming analysis…</span>

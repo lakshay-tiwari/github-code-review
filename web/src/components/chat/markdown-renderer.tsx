@@ -5,10 +5,61 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { CodeBlock } from "@/components/chat/code-block";
 import { MermaidDiagram } from "@/components/chat/mermaid-diagram";
-import { ExternalLink, Hash } from "lucide-react";
+import { ExternalLink, Hash, Loader2, GitFork } from "lucide-react";
 
 interface MarkdownRendererProps {
   content: string;
+  isStreaming?: boolean;
+}
+
+/**
+ * Detects whether a markdown string has an open (unclosed) mermaid code fence.
+ * Returns { cleanContent, hasOpenMermaid }.
+ * - cleanContent: content with the incomplete mermaid block removed
+ * - hasOpenMermaid: true if we stripped an incomplete block
+ */
+function stripIncompleteMermaidBlocks(content: string): {
+  cleanContent: string;
+  hasOpenMermaid: boolean;
+} {
+  // Match all fenced code blocks (including incomplete ones at the end)
+  // Strategy: find the last ``` fence and check if it's unclosed
+  const fencePattern = /```(\w*)\n/g;
+  const closeFencePattern = /```\s*$/m;
+
+  let lastMermaidStart = -1;
+  let match: RegExpExecArray | null;
+
+  while ((match = fencePattern.exec(content)) !== null) {
+    if (match[1].toLowerCase() === "mermaid") {
+      lastMermaidStart = match.index;
+    }
+  }
+
+  if (lastMermaidStart === -1) {
+    return { cleanContent: content, hasOpenMermaid: false };
+  }
+
+  // Check if this last mermaid block has a closing fence
+  const afterOpenFence = content.slice(lastMermaidStart);
+  const lines = afterOpenFence.split("\n");
+  // First line is the opening ```mermaid, look for a closing ``` in remaining lines
+  let hasClosure = false;
+  for (let i = 1; i < lines.length; i++) {
+    if (/^```\s*$/.test(lines[i])) {
+      hasClosure = true;
+      break;
+    }
+  }
+
+  if (hasClosure) {
+    // The last mermaid block is properly closed
+    return { cleanContent: content, hasOpenMermaid: false };
+  }
+
+  // Strip the incomplete mermaid block
+  const cleanContent = content.slice(0, lastMermaidStart);
+  return { cleanContent, hasOpenMermaid: true };
 }
 
 // Generate URL slug for heading anchor links
@@ -33,8 +84,37 @@ function isSafeUrl(url?: string): boolean {
   );
 }
 
-function RawMarkdownRenderer({ content }: MarkdownRendererProps) {
+/** Placeholder shown while a mermaid block is still being streamed */
+function MermaidStreamingPlaceholder() {
   return (
+    <div className="my-5 rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden shadow-sm">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900/90 border-b border-zinc-800/80">
+        <div className="p-1 rounded bg-indigo-500/10 text-indigo-400">
+          <GitFork className="h-3.5 w-3.5" />
+        </div>
+        <span className="text-xs font-semibold text-zinc-200">
+          Architecture Diagram
+        </span>
+        <span className="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+          Mermaid
+        </span>
+      </div>
+      <div className="flex flex-col items-center justify-center p-8 gap-2.5 text-zinc-500 text-xs min-h-[120px]">
+        <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />
+        <span className="text-zinc-400">Building diagram — waiting for complete data…</span>
+      </div>
+    </div>
+  );
+}
+
+function RawMarkdownRenderer({ content, isStreaming }: MarkdownRendererProps) {
+  // During streaming, strip incomplete mermaid blocks to avoid failed renders
+  const { cleanContent, hasOpenMermaid } = isStreaming
+    ? stripIncompleteMermaidBlocks(content)
+    : { cleanContent: content, hasOpenMermaid: false };
+
+  return (
+    <>
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
@@ -218,8 +298,10 @@ function RawMarkdownRenderer({ content }: MarkdownRendererProps) {
         ),
       }}
     >
-      {content}
+      {cleanContent}
     </ReactMarkdown>
+    {isStreaming && hasOpenMermaid && <MermaidStreamingPlaceholder />}
+    </>
   );
 }
 
