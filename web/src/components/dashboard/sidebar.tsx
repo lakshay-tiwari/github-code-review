@@ -8,8 +8,16 @@ import {
   MessageSquare,
   Network,
   Settings,
+  PanelLeftClose,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+export interface DashboardSidebarProps {
+  className?: string;
+  showCollapseButton?: boolean;
+  onCollapse?: () => void;
+  onItemClick?: () => void;
+}
 
 interface NavItem {
   name: string;
@@ -47,27 +55,52 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function DashboardSidebar() {
+export function DashboardSidebar({
+  className,
+  showCollapseButton = false,
+  onCollapse,
+  onItemClick,
+}: DashboardSidebarProps = {}) {
   const pathname = usePathname();
 
+  const defaultClasses =
+    "w-64 border-r border-zinc-800 bg-zinc-950 flex flex-col justify-between p-4 shrink-0 min-h-screen";
+
   return (
-    <aside className="w-64 border-r border-zinc-800 bg-zinc-950 flex flex-col justify-between p-4 shrink-0 min-h-screen">
+    <aside className={className || defaultClasses}>
       <div className="space-y-6">
         {/* Brand */}
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md"
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 font-mono font-bold text-white shadow-sm shadow-indigo-600/30">
-            <Code2 className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="text-sm font-bold tracking-tight text-white leading-none">
-              Cortex
+        <div className="flex items-center justify-between">
+          <Link
+            href="/"
+            onClick={onItemClick}
+            className="flex items-center gap-2.5 px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-md min-w-0 flex-1"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 font-mono font-bold text-white shadow-sm shadow-indigo-600/30 shrink-0">
+              <Code2 className="h-4 w-4" />
             </div>
-            <div className="text-[10px] text-zinc-400 mt-0.5">Codebase RAG</div>
-          </div>
-        </Link>
+            <div className="min-w-0">
+              <div className="text-sm font-bold tracking-tight text-white leading-none truncate">
+                Cortex
+              </div>
+              <div className="text-[10px] text-zinc-400 mt-0.5 truncate">
+                Codebase RAG
+              </div>
+            </div>
+          </Link>
+
+          {showCollapseButton && onCollapse && (
+            <button
+              type="button"
+              onClick={onCollapse}
+              aria-label="Collapse Main Sidebar (Ctrl+B)"
+              title="Collapse Main Sidebar (Ctrl+B)"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 shrink-0 cursor-pointer"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         {/* Navigation list */}
         <nav className="space-y-1" aria-label="Dashboard Navigation">
@@ -87,7 +120,7 @@ export function DashboardSidebar() {
                     <span>{item.name}</span>
                   </div>
                   {item.badge && (
-                    <span className="text-[10px] font-mono text-zinc-400 border border-zinc-800 rounded px-1.5 py-0.2">
+                    <span className="text-[10px] font-mono text-zinc-400 border border-zinc-800 rounded px-1.5 py-0.5">
                       {item.badge}
                     </span>
                   )}
@@ -99,6 +132,7 @@ export function DashboardSidebar() {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={onItemClick}
                 className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
                   isActive
                     ? "bg-indigo-600/10 text-indigo-300 border border-indigo-500/20"
