@@ -42,9 +42,9 @@ export function CodeBlock({ language, code }: CodeBlockProps) {
   };
 
   return (
-    <div className="relative my-4 group/code rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-sm">
+    <div className="relative my-4 group/code rounded-xl overflow-hidden border border-slate-700/60 dark:border-zinc-800 bg-slate-900 dark:bg-zinc-950 shadow-sm">
       {/* Code block header bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/90 border-b border-zinc-800/80 text-xs">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-950/80 dark:bg-zinc-900/90 border-b border-slate-800/80 dark:border-zinc-800/80 text-xs">
         <span className="font-mono text-[11px] font-medium tracking-wider text-zinc-400 uppercase">
           {lang || "code"}
         </span>
@@ -52,7 +52,7 @@ export function CodeBlock({ language, code }: CodeBlockProps) {
           onClick={handleCopy}
           type="button"
           aria-label="Copy code"
-          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 transition-colors cursor-pointer"
         >
           {copied ? (
             <>

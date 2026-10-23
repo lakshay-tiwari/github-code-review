@@ -21,16 +21,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer";
+      "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer";
 
     const variantStyles = {
       primary:
-        "bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm shadow-indigo-600/30",
+        "bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm shadow-indigo-600/25 active:bg-indigo-700",
       secondary:
-        "bg-zinc-800 text-zinc-100 hover:bg-zinc-700 border border-zinc-700/60",
+        "bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200/80 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:border-zinc-700/60",
       outline:
-        "border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white",
-      ghost: "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60",
+        "border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white",
+      ghost:
+        "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800/60",
       danger: "bg-red-600 text-white hover:bg-red-500",
     };
 

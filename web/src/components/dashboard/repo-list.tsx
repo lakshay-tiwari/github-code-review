@@ -105,15 +105,15 @@ export function RepoList({
 
   if (hasError) {
     return (
-      <Card className="border-red-900/50 bg-red-950/20 text-center py-12 px-6">
+      <Card className="border-red-300 dark:border-red-900/50 bg-red-50/60 dark:bg-red-950/20 text-center py-12 px-6">
         <CardContent className="flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-900/40 text-red-400">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400">
             <AlertTriangle className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-semibold text-white">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">
             Unable to load repositories
           </h3>
-          <p className="max-w-md text-xs text-zinc-400">
+          <p className="max-w-md text-xs text-slate-600 dark:text-zinc-400">
             {errorMessage || "An error occurred connecting to the repository store. Please try again."}
           </p>
           <div className="mt-2 flex items-center gap-3">
@@ -139,17 +139,17 @@ export function RepoList({
 
   if (repositories.length === 0) {
     return (
-      <Card className="border-dashed border-zinc-800 bg-zinc-900/30 text-center py-16 px-6">
+      <Card className="border-dashed border-slate-300 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-900/30 text-center py-16 px-6">
         <CardContent className="flex flex-col items-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800/80 text-zinc-400 mb-4 border border-zinc-700/50">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800/80 text-slate-500 dark:text-zinc-400 mb-4 border border-slate-200 dark:border-zinc-700/50">
             <FolderGit2 className="h-7 w-7" />
           </div>
 
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             No repositories indexed yet
           </h3>
 
-          <p className="mt-2 max-w-md text-xs sm:text-sm text-zinc-400 leading-relaxed">
+          <p className="mt-2 max-w-md text-xs sm:text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
             Submit any public GitHub repository. Cortex will validate its structure,
             extract code symbols, and dispatch background ingestion jobs.
           </p>
@@ -166,14 +166,14 @@ export function RepoList({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-zinc-300">
+          <h2 className="text-sm font-medium text-slate-700 dark:text-zinc-300">
             Connected Repositories ({repositories.length})
           </h2>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => fetchRepositories(true)}
-            className="h-7 w-7 p-0 text-zinc-400 hover:text-white"
+            className="h-7 w-7 p-0 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             title="Refresh repository list"
           >
             <RefreshCw
@@ -188,19 +188,19 @@ export function RepoList({
         {repositories.map((repo) => (
           <Card
             key={repo.id}
-            className="border-zinc-800 bg-zinc-900/60 hover:border-zinc-700 transition-colors flex flex-col justify-between"
+            className="border-slate-200/90 bg-white/90 dark:border-zinc-800 dark:bg-zinc-900/60 hover:border-indigo-400/50 dark:hover:border-zinc-700 hover:shadow-md transition-all flex flex-col justify-between"
           >
             <CardContent className="p-5 space-y-3.5">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="text-xs text-zinc-400 truncate">{repo.owner}</div>
-                  <h3 className="text-sm font-semibold text-white truncate flex items-center gap-1.5">
+                  <div className="text-xs text-slate-500 dark:text-zinc-400 truncate">{repo.owner}</div>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
                     <span>{repo.name}</span>
                     <a
                       href={repo.github_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-zinc-500 hover:text-zinc-300 transition-colors"
+                      className="text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors"
                       title="Open on GitHub"
                     >
                       <ExternalLink className="h-3 w-3" />
@@ -216,7 +216,7 @@ export function RepoList({
                     </Badge>
                     <Link
                       href={`/dashboard/chat?repo_id=${repo.id}`}
-                      className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-950/40 hover:bg-indigo-900/50 border border-indigo-800/40 px-2 py-0.5 rounded-md"
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200/80 dark:border-indigo-800/40 px-2 py-0.5 rounded-md"
                     >
                       <MessageSquare className="h-2.5 w-2.5" />
                       <span>Chat</span>
@@ -225,7 +225,7 @@ export function RepoList({
                 )}
                 {repo.status === "indexing" && (
                   <Badge variant="warning" className="gap-1 text-[10px]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping" />
                     <span>Indexing</span>
                   </Badge>
                 )}
@@ -244,17 +244,17 @@ export function RepoList({
               </div>
 
               {/* Branch and commit info */}
-              <div className="flex items-center gap-3 text-xs text-zinc-400">
+              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400">
                 <div className="flex items-center gap-1">
-                  <GitBranch className="h-3.5 w-3.5 text-zinc-500" />
+                  <GitBranch className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
                   <span className="font-mono text-[11px]">
                     {repo.default_branch}
                   </span>
                 </div>
                 {repo.latest_commit_sha && (
                   <div className="flex items-center gap-1">
-                    <GitCommit className="h-3.5 w-3.5 text-zinc-500" />
-                    <span className="font-mono text-[11px] text-zinc-300">
+                    <GitCommit className="h-3.5 w-3.5 text-slate-400 dark:text-zinc-500" />
+                    <span className="font-mono text-[11px] text-slate-700 dark:text-zinc-300">
                       {repo.latest_commit_sha.slice(0, 7)}
                     </span>
                   </div>
@@ -265,15 +265,15 @@ export function RepoList({
               {(repo.status === "indexing" || repo.status === "pending") &&
                 repo.latest_job && (
                   <div className="space-y-1.5 pt-1">
-                    <div className="flex justify-between text-[11px] text-zinc-400">
+                    <div className="flex justify-between text-[11px] text-slate-500 dark:text-zinc-400">
                       <span className="truncate">
                         {repo.latest_job.current_step || "Queueing..."}
                       </span>
                       <span>{repo.latest_job.progress}%</span>
                     </div>
-                    <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="bg-indigo-500 h-1.5 rounded-full transition-all duration-500"
+                        className="bg-indigo-600 dark:bg-indigo-500 h-1.5 rounded-full transition-all duration-500"
                         style={{ width: `${Math.max(5, repo.latest_job.progress)}%` }}
                       />
                     </div>
@@ -282,7 +282,7 @@ export function RepoList({
 
               {/* Error display */}
               {repo.status === "failed" && repo.error_message && (
-                <div className="rounded border border-red-900/60 bg-red-950/40 p-2 text-[11px] text-red-300">
+                <div className="rounded border border-red-300 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 p-2 text-[11px] text-red-700 dark:text-red-300">
                   {repo.error_message}
                 </div>
               )}

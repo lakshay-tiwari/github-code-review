@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { MarkdownRenderer } from "@/components/chat/markdown-renderer";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { createSSEStreamAccumulator } from "@/lib/sse-parser";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import {
@@ -71,27 +72,27 @@ function CitationChip({ cite }: { cite: Citation }) {
       type="button"
       onClick={handleCopy}
       title={`Click to copy reference: ${cite.file_path}:${cite.start_line}-${cite.end_line}`}
-      className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-850 hover:bg-zinc-800 border border-zinc-750 hover:border-indigo-500/50 text-[11px] font-mono text-zinc-300 transition-colors cursor-pointer"
+      className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200/90 hover:border-indigo-500/50 text-[11px] font-mono text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:border-zinc-700 dark:hover:border-indigo-500/50 dark:text-zinc-200 transition-colors cursor-pointer"
     >
-      <FileCode2 className="h-3 w-3 text-indigo-400 shrink-0" />
+      <FileCode2 className="h-3 w-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
       <span
-        className="text-zinc-200 font-medium truncate max-w-[140px]"
+        className="text-slate-800 dark:text-zinc-200 font-medium truncate max-w-[140px]"
         title={cite.file_path}
       >
         {fileName}
       </span>
-      <span className="text-indigo-400 font-medium shrink-0">
+      <span className="text-indigo-600 dark:text-indigo-400 font-medium shrink-0">
         :{cite.start_line}-{cite.end_line}
       </span>
       {cite.symbol_name && (
-        <span className="text-emerald-400 shrink-0 text-[10px]">
+        <span className="text-emerald-600 dark:text-emerald-400 shrink-0 text-[10px]">
           · {cite.symbol_name}
         </span>
       )}
       {copied ? (
-        <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+        <Check className="h-3 w-3 text-emerald-500 shrink-0" />
       ) : (
-        <Copy className="h-2.5 w-2.5 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+        <Copy className="h-2.5 w-2.5 text-slate-400 group-hover:text-slate-600 dark:text-zinc-500 dark:group-hover:text-zinc-300 shrink-0" />
       )}
     </button>
   );
@@ -115,13 +116,13 @@ function CopyMessageButton({ content }: { content: string }) {
       type="button"
       onClick={handleCopy}
       aria-label="Copy entire answer as Markdown"
-      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 border border-transparent hover:border-zinc-700/60 transition-colors cursor-pointer"
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-200/70 border border-transparent hover:border-slate-300/60 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 dark:border-transparent dark:hover:border-zinc-700/60 transition-colors cursor-pointer"
       title="Copy entire answer as Markdown"
     >
       {copied ? (
         <>
-          <Check className="h-3 w-3 text-emerald-400" />
-          <span className="text-emerald-400">Copied</span>
+          <Check className="h-3 w-3 text-emerald-500" />
+          <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
         </>
       ) : (
         <>
@@ -135,12 +136,12 @@ function CopyMessageButton({ content }: { content: string }) {
 
 function TypingIndicator() {
   return (
-    <div className="flex items-center gap-2 py-3 px-1 text-zinc-400 text-xs">
+    <div className="flex items-center gap-2 py-3 px-1 text-slate-500 dark:text-zinc-400 text-xs">
       <div className="flex gap-1.5 items-center">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-bounce"
+            className="h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-bounce"
             style={{
               animationDelay: `${i * 150}ms`,
               animationDuration: "900ms",
@@ -148,7 +149,7 @@ function TypingIndicator() {
           />
         ))}
       </div>
-      <span className="text-[11px] text-zinc-500">
+      <span className="text-[11px] text-slate-500 dark:text-zinc-500">
         Searching codebase & formulating technical analysis…
       </span>
     </div>
@@ -647,9 +648,9 @@ export default function ChatWorkspacePage() {
 
   // Current chat pane (Column 3)
   const conversationPaneContent = (
-    <section className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-zinc-950">
+    <section className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-slate-50 dark:bg-zinc-950 transition-colors">
       {/* ── Conversation Header Bar ── */}
-      <div className="shrink-0 border-b border-zinc-800/80 px-4 py-2.5 bg-zinc-900/40 backdrop-blur-sm flex items-center justify-between gap-3">
+      <div className="shrink-0 border-b border-slate-200/80 dark:border-zinc-800/80 px-4 py-2.5 bg-white/80 dark:bg-zinc-900/40 backdrop-blur-sm flex items-center justify-between gap-3">
         {/* Left: Toggles & Title */}
         <div className="flex items-center gap-2 min-w-0">
           {isMobile ? (
@@ -662,7 +663,7 @@ export default function ChatWorkspacePage() {
                 }}
                 aria-label="Open navigation menu"
                 title="Open navigation menu"
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/80 border border-zinc-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-300 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800/80 dark:border-zinc-800 transition-colors cursor-pointer"
               >
                 <Menu className="h-4 w-4" />
               </button>
@@ -674,7 +675,7 @@ export default function ChatWorkspacePage() {
                 }}
                 aria-label="Open chat threads"
                 title="Open chat threads"
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/80 border border-zinc-800 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-300 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800/80 dark:border-zinc-800 transition-colors cursor-pointer"
               >
                 <MessageSquare className="h-4 w-4" />
               </button>
@@ -696,8 +697,8 @@ export default function ChatWorkspacePage() {
                 }
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                   isMainCollapsed
-                    ? "bg-indigo-600/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/25"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border-zinc-800/80"
+                    ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-600/15 dark:text-indigo-300 dark:border-indigo-500/30 dark:hover:bg-indigo-600/25"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-300/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 dark:border-zinc-800/80"
                 }`}
               >
                 <PanelLeft className="h-3.5 w-3.5" />
@@ -719,8 +720,8 @@ export default function ChatWorkspacePage() {
                 }
                 className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                   isHistoryCollapsed
-                    ? "bg-indigo-600/15 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/25"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border-zinc-800/80"
+                    ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-600/15 dark:text-indigo-300 dark:border-indigo-500/30 dark:hover:bg-indigo-600/25"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-300/80 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 dark:border-zinc-800/80"
                 }`}
               >
                 <MessageSquare className="h-3.5 w-3.5" />
@@ -729,17 +730,17 @@ export default function ChatWorkspacePage() {
             </>
           )}
 
-          <div className="h-4 w-px bg-zinc-800 mx-1 hidden sm:block" />
+          <div className="h-4 w-px bg-slate-300 dark:bg-zinc-800 mx-1 hidden sm:block" />
 
           <div className="flex items-center gap-2 min-w-0">
-            <div className="h-7 w-7 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-              <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+            <div className="h-7 w-7 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 dark:bg-indigo-600/20 dark:border-indigo-500/30 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <Sparkles className="h-3.5 w-3.5" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-white leading-none shrink-0">
+              <p className="text-xs font-semibold text-slate-900 dark:text-white leading-none shrink-0">
                 Cortex RAG
               </p>
-              <p className="text-[10px] text-zinc-500 mt-0.5 leading-none truncate hidden xl:block">
+              <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-0.5 leading-none truncate hidden xl:block">
                 Grounded · Technical Architecture View
               </p>
             </div>
@@ -749,19 +750,19 @@ export default function ChatWorkspacePage() {
           </div>
         </div>
 
-        {/* Right: Active Repo info & User Profile Button */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Right: Active Repo info, Theme Switcher & User Profile Button */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {activeRepo && (
-            <div className="hidden md:flex items-center gap-2.5 text-[11px] text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-lg px-2.5 py-1">
+            <div className="hidden md:flex items-center gap-2.5 text-[11px] text-slate-600 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800 rounded-lg px-2.5 py-1">
               <span className="flex items-center gap-1">
-                <FolderGit2 className="h-3 w-3 text-indigo-400" />
-                <span className="text-zinc-200 font-medium truncate max-w-[120px]">
+                <FolderGit2 className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                <span className="text-slate-800 dark:text-zinc-200 font-medium truncate max-w-[120px]">
                   {activeRepo.name}
                 </span>
               </span>
-              <span className="text-zinc-600">·</span>
+              <span className="text-slate-400 dark:text-zinc-600">·</span>
               <span className="flex items-center gap-1">
-                <GitBranch className="h-3 w-3 text-zinc-500" />
+                <GitBranch className="h-3 w-3 text-slate-500 dark:text-zinc-500" />
                 <span className="truncate max-w-[80px]">
                   {activeRepo.default_branch}
                 </span>
@@ -769,10 +770,13 @@ export default function ChatWorkspacePage() {
             </div>
           )}
 
+          {/* Theme Switcher in Chat Header */}
+          <ThemeToggle size="sm" />
+
           <UserButton
             appearance={{
               elements: {
-                avatarBox: "h-7 w-7 ring-1 ring-zinc-700",
+                avatarBox: "h-7 w-7 ring-1 ring-slate-300 dark:ring-zinc-700",
               },
             }}
           />
@@ -790,18 +794,18 @@ export default function ChatWorkspacePage() {
           {messages.length === 0 && !isStreaming && (
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-5">
               <div className="relative">
-                <div className="h-16 w-16 rounded-2xl bg-indigo-600/15 border border-indigo-500/25 flex items-center justify-center">
-                  <Sparkles className="h-7 w-7 text-indigo-400" />
+                <div className="h-16 w-16 rounded-2xl bg-indigo-50 border border-indigo-200 dark:bg-indigo-600/15 dark:border-indigo-500/25 flex items-center justify-center">
+                  <Sparkles className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-100 border border-emerald-300 dark:bg-emerald-500/20 dark:border-emerald-500/40 flex items-center justify-center">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <h3 className="text-base font-semibold text-white">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                   Codebase Technical Architecture & QA
                 </h3>
-                <p className="text-xs text-zinc-400 max-w-md leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-md leading-relaxed">
                   Ask repository questions, explore architecture diagrams, inspect
                   function workflows, and review grounded code citations.
                 </p>
@@ -816,7 +820,7 @@ export default function ChatWorkspacePage() {
                     key={q}
                     type="button"
                     onClick={() => setInputPrompt(q)}
-                    className="text-xs px-3.5 py-1.5 rounded-full border border-zinc-700/60 text-zinc-300 hover:text-white hover:border-indigo-500/60 hover:bg-indigo-500/10 transition-all text-left cursor-pointer"
+                    className="text-xs px-3.5 py-1.5 rounded-full border border-slate-300 text-slate-700 hover:text-slate-900 hover:border-indigo-500 hover:bg-indigo-50 dark:border-zinc-700/60 dark:text-zinc-300 dark:hover:text-white dark:hover:border-indigo-500/60 dark:hover:bg-indigo-500/10 transition-all text-left cursor-pointer"
                   >
                     {q}
                   </button>
@@ -834,8 +838,8 @@ export default function ChatWorkspacePage() {
               }`}
             >
               {msg.role === "assistant" && (
-                <div className="h-8 w-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0 mt-1 shadow-sm">
-                  <Sparkles className="h-4 w-4 text-indigo-400" />
+                <div className="h-8 w-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 dark:bg-indigo-600/20 dark:border-indigo-500/30 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-1 shadow-xs">
+                  <Sparkles className="h-4 w-4" />
                 </div>
               )}
 
@@ -849,11 +853,11 @@ export default function ChatWorkspacePage() {
                     {msg.content}
                   </div>
                 ) : (
-                  <article className="bg-zinc-900/60 border border-zinc-800 rounded-2xl rounded-tl-sm overflow-hidden shadow-sm">
-                    <div className="flex items-center justify-between px-5 py-2.5 bg-zinc-900/90 border-b border-zinc-800/80">
+                  <article className="bg-white dark:bg-zinc-900/60 border border-slate-200/90 dark:border-zinc-800 rounded-2xl rounded-tl-sm overflow-hidden shadow-xs dark:shadow-sm">
+                    <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50/90 dark:bg-zinc-900/90 border-b border-slate-200/80 dark:border-zinc-800/80">
                       <div className="flex items-center gap-2">
-                        <Terminal className="h-3.5 w-3.5 text-indigo-400" />
-                        <span className="text-xs font-semibold text-zinc-200">
+                        <Terminal className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                        <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
                           Codebase Analysis
                         </span>
                         {msg.status === "failed" ? (
@@ -864,7 +868,7 @@ export default function ChatWorkspacePage() {
                             Interrupted
                           </Badge>
                         ) : (
-                          <span className="text-[10px] text-zinc-500">
+                          <span className="text-[10px] text-slate-500 dark:text-zinc-500">
                             Grounded Report
                           </span>
                         )}
@@ -872,15 +876,15 @@ export default function ChatWorkspacePage() {
                       <CopyMessageButton content={msg.content} />
                     </div>
 
-                    <div className="px-5 sm:px-6 py-5 text-zinc-200">
+                    <div className="px-5 sm:px-6 py-5 text-slate-800 dark:text-zinc-200">
                       <MarkdownRenderer content={msg.content} />
                     </div>
 
                     {msg.citations && msg.citations.length > 0 && (
-                      <div className="px-5 sm:px-6 py-3 bg-zinc-950/60 border-t border-zinc-800/80 space-y-2">
+                      <div className="px-5 sm:px-6 py-3 bg-slate-50/80 dark:bg-zinc-950/60 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-2">
                         <div className="flex items-center gap-1.5">
-                          <FileCode2 className="h-3.5 w-3.5 text-indigo-400" />
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                          <FileCode2 className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-zinc-400">
                             Verified Source Citations ({msg.citations.length})
                           </span>
                         </div>
@@ -896,7 +900,7 @@ export default function ChatWorkspacePage() {
               </div>
 
               {msg.role === "user" && (
-                <div className="h-8 w-8 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 mt-1 text-xs font-bold text-zinc-300">
+                <div className="h-8 w-8 rounded-xl bg-slate-200 border border-slate-300 dark:bg-zinc-800 dark:border-zinc-700 flex items-center justify-center shrink-0 mt-1 text-xs font-bold text-slate-700 dark:text-zinc-300">
                   U
                 </div>
               )}
@@ -906,15 +910,15 @@ export default function ChatWorkspacePage() {
           {/* Streaming / In-Progress Card */}
           {isStreaming && (
             <div className="flex gap-3.5 justify-start">
-              <div className="h-8 w-8 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center shrink-0 mt-1">
-                <Loader2 className="h-4 w-4 text-indigo-400 animate-spin" />
+              <div className="h-8 w-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 dark:bg-indigo-600/20 dark:border-indigo-500/30 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-1">
+                <Loader2 className="h-4 w-4 animate-spin" />
               </div>
 
-              <div className="flex-1 bg-zinc-900/60 border border-zinc-800 rounded-2xl rounded-tl-sm overflow-hidden shadow-sm min-w-0">
-                <div className="flex items-center justify-between px-5 py-2.5 bg-zinc-900/90 border-b border-zinc-800/80">
+              <div className="flex-1 bg-white dark:bg-zinc-900/60 border border-slate-200/90 dark:border-zinc-800 rounded-2xl rounded-tl-sm overflow-hidden shadow-xs dark:shadow-sm min-w-0">
+                <div className="flex items-center justify-between px-5 py-2.5 bg-slate-50/90 dark:bg-zinc-900/90 border-b border-slate-200/80 dark:border-zinc-800/80">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-3.5 w-3.5 text-indigo-400 animate-spin" />
-                    <span className="text-xs font-semibold text-zinc-200">
+                    <Loader2 className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                    <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
                       Generating Codebase Analysis…
                     </span>
                   </div>
@@ -927,10 +931,10 @@ export default function ChatWorkspacePage() {
                 </div>
 
                 {streamingCitations.length > 0 && (
-                  <div className="px-5 sm:px-6 py-2.5 bg-zinc-950/40 border-b border-zinc-800/60 space-y-1.5">
+                  <div className="px-5 sm:px-6 py-2.5 bg-slate-50/60 dark:bg-zinc-950/40 border-b border-slate-200/60 dark:border-zinc-800/60 space-y-1.5">
                     <div className="flex items-center gap-1.5">
-                      <FileCode2 className="h-3 w-3 text-indigo-400" />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                      <FileCode2 className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-zinc-400">
                         Grounded References ({streamingCitations.length})
                       </span>
                     </div>
@@ -946,8 +950,8 @@ export default function ChatWorkspacePage() {
                   {streamingText ? (
                     <div>
                       <MarkdownRenderer content={streamingText} isStreaming />
-                      <div className="flex items-center gap-2 mt-4 text-xs text-indigo-400/80 animate-pulse">
-                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                      <div className="flex items-center gap-2 mt-4 text-xs text-indigo-600 dark:text-indigo-400 animate-pulse">
+                        <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
                         <span className="text-[11px]">Streaming analysis…</span>
                       </div>
                     </div>
@@ -961,8 +965,8 @@ export default function ChatWorkspacePage() {
 
           {/* Error alert */}
           {errorMsg && (
-            <div className="flex items-start gap-2.5 p-3.5 bg-red-950/30 border border-red-900/40 rounded-xl text-xs text-red-300">
-              <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+            <div className="flex items-start gap-2.5 p-3.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 rounded-xl text-xs text-red-700 dark:text-red-300">
+              <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
               <span className="leading-relaxed">{errorMsg}</span>
             </div>
           )}
@@ -970,11 +974,11 @@ export default function ChatWorkspacePage() {
       </div>
 
       {/* ── Input Composer Area ── */}
-      <div className="shrink-0 border-t border-zinc-800/80 bg-zinc-900/50 backdrop-blur-sm p-4">
+      <div className="shrink-0 border-t border-slate-200/80 dark:border-zinc-800/80 bg-white/70 dark:bg-zinc-900/50 backdrop-blur-sm p-4">
         <div className="max-w-4xl mx-auto">
           <form
             onSubmit={handleSendMessage}
-            className="relative flex items-end gap-2 bg-zinc-900 border border-zinc-700/60 rounded-2xl px-4 py-3 focus-within:border-indigo-500/60 focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all shadow-sm"
+            className="relative flex items-end gap-2 bg-white dark:bg-zinc-900 border border-slate-300 dark:border-zinc-700/60 rounded-2xl px-4 py-3 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all shadow-xs"
           >
             <textarea
               ref={textareaRef}
@@ -988,13 +992,13 @@ export default function ChatWorkspacePage() {
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
               disabled={isStreaming || !selectedRepoId}
-              className="flex-1 resize-none bg-transparent text-sm text-white placeholder-zinc-500 focus:outline-none leading-relaxed disabled:opacity-50 max-h-40"
+              className="flex-1 resize-none bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none leading-relaxed disabled:opacity-50 max-h-40"
               style={{ minHeight: "24px" }}
             />
             <button
               type="submit"
               disabled={isStreaming || !inputPrompt.trim() || !selectedRepoId}
-              className="shrink-0 h-8 w-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="shrink-0 h-8 w-8 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-xs"
               aria-label="Send message"
             >
               {isStreaming ? (
@@ -1004,10 +1008,10 @@ export default function ChatWorkspacePage() {
               )}
             </button>
           </form>
-          <p className="text-center text-[10px] text-zinc-500 mt-2">
+          <p className="text-center text-[10px] text-slate-500 dark:text-zinc-500 mt-2">
             Press{" "}
-            <kbd className="font-mono text-zinc-400">⌘</kbd>+
-            <kbd className="font-mono text-zinc-400">Enter</kbd> to send
+            <kbd className="font-mono text-slate-600 dark:text-zinc-400">⌘</kbd>+
+            <kbd className="font-mono text-slate-600 dark:text-zinc-400">Enter</kbd> to send
           </p>
         </div>
       </div>
@@ -1015,7 +1019,7 @@ export default function ChatWorkspacePage() {
   );
 
   return (
-    <div className="h-full w-full overflow-hidden bg-zinc-950 text-zinc-100 flex flex-col">
+    <div className="h-full w-full overflow-hidden bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 flex flex-col transition-colors">
       {isMobile ? (
         /* Mobile Layout: Conversation is primary, drawers for Navigation and Threads */
         <div className="relative h-full w-full flex flex-col overflow-hidden">
@@ -1032,23 +1036,23 @@ export default function ChatWorkspacePage() {
               aria-label="Navigation drawer"
             >
               <div
-                className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+                className="fixed inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-sm transition-opacity"
                 onClick={() => setIsMobileMainOpen(false)}
                 aria-hidden="true"
               />
-              <div className="relative z-10 w-72 max-w-[85vw] bg-zinc-950 border-r border-zinc-800 shadow-2xl flex flex-col h-full overflow-y-auto">
+              <div className="relative z-10 w-72 max-w-[85vw] bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col h-full overflow-y-auto">
                 <div className="absolute top-3 right-3 z-20">
                   <button
                     type="button"
                     onClick={() => setIsMobileMainOpen(false)}
                     aria-label="Close navigation"
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 border border-transparent hover:border-slate-200 dark:hover:border-zinc-800 transition-colors cursor-pointer"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
                 <DashboardSidebar
-                  className="w-full h-full flex flex-col justify-between p-4 bg-zinc-950 overflow-y-auto min-w-0"
+                  className="w-full h-full flex flex-col justify-between p-4 bg-white dark:bg-zinc-950 overflow-y-auto min-w-0"
                   onItemClick={() => setIsMobileMainOpen(false)}
                 />
               </div>
@@ -1064,17 +1068,17 @@ export default function ChatWorkspacePage() {
               aria-label="Chat threads drawer"
             >
               <div
-                className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+                className="fixed inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-sm transition-opacity"
                 onClick={() => setIsMobileHistoryOpen(false)}
                 aria-hidden="true"
               />
-              <div className="relative z-10 w-80 max-w-[90vw] bg-zinc-950 border-r border-zinc-800 shadow-2xl flex flex-col h-full overflow-hidden">
+              <div className="relative z-10 w-80 max-w-[90vw] bg-white dark:bg-zinc-950 border-r border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col h-full overflow-hidden">
                 <div className="absolute top-3 right-3 z-20">
                   <button
                     type="button"
                     onClick={() => setIsMobileHistoryOpen(false)}
                     aria-label="Close threads"
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900 border border-transparent hover:border-slate-200 dark:hover:border-zinc-800 transition-colors cursor-pointer"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -1130,13 +1134,13 @@ export default function ChatWorkspacePage() {
             className="min-w-0"
           >
             <DashboardSidebar
-              className="w-full h-full flex flex-col justify-between p-4 bg-zinc-950 overflow-y-auto min-w-0"
+              className="w-full h-full flex flex-col justify-between p-4 bg-white dark:bg-zinc-950 overflow-y-auto min-w-0"
               showCollapseButton={true}
               onCollapse={handleToggleMainSidebar}
             />
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle />
 
           {/* Column 2: Chat History Sidebar */}
           <ResizablePanel
@@ -1174,7 +1178,7 @@ export default function ChatWorkspacePage() {
             />
           </ResizablePanel>
 
-          <ResizableHandle withHandle />
+          <ResizableHandle />
 
           {/* Column 3: Current Conversation */}
           <ResizablePanel
